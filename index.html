@@ -1863,66 +1863,7 @@
     </style>
 
   
-    <style>
-      /* MOBILE SERIAL PASTE UX v1 */
-      .serial-input-wrap {
-        position: relative;
-        min-width: 0;
-        flex: 1;
-      }
-
-      .serial-input-wrap #serial {
-        width: 100%;
-        padding-left: 70px !important;
-        direction: ltr;
-        text-align: left;
-        letter-spacing: .35px;
-      }
-
-      .serial-input-wrap #serial::placeholder {
-        color: #9aa8b1;
-        opacity: 1;
-      }
-
-      .paste-btn {
-        position: absolute;
-        left: 7px;
-        top: 50%;
-        min-width: 52px;
-        height: 36px;
-        transform: translateY(-50%);
-        border: 1px solid #c9dce2;
-        border-radius: 5px;
-        background: #edf5f6;
-        color: #0c6573;
-        font: 800 11px Cairo, sans-serif;
-        cursor: pointer;
-      }
-
-      .paste-btn:hover {
-        border-color: #9fc6ce;
-        background: #e4f1f3;
-      }
-
-      .paste-btn.pasted {
-        border-color: #abd9c8;
-        background: #eaf7f1;
-        color: #167252;
-      }
-
-      @media (max-width: 720px) {
-        .serial-input-wrap #serial {
-          min-height: 54px !important;
-          font-size: 16px !important;
-        }
-
-        .paste-btn {
-          height: 40px;
-          min-width: 56px;
-          font-size: 12px;
-        }
-      }
-    </style>
+    
 
   </head>
   <body>
@@ -1962,20 +1903,14 @@
                     <p class="verify-lead">أدخل الرقم التسلسلي أو امسح رمز QR للوصول إلى سجل الشهادة الرسمي.</p>
                     <div class="verify-search-card">
                       <label for="serial">الرقم التسلسلي</label>
-                      <div class="entry serial-entry">
-                        <div class="serial-input-wrap">
-                          <input
-                            id="serial"
-                            placeholder="DVH-2026-78421"
-                            autocomplete="off"
-                            autocorrect="off"
-                            autocapitalize="characters"
-                            spellcheck="false"
-                            enterkeyhint="go"
-                            inputmode="text"
-                          />
-                          <button type="button" class="paste-btn" id="pasteSerialBtn">لصق</button>
-                        </div>
+                      <div class="entry">
+                        <input
+                          id="serial"
+                          type="text"
+                          placeholder="أدخل السيريال المطبوع"
+                          autocomplete="off"
+                          spellcheck="false"
+                        />
                         <button class="primary" id="verifyBtn">← تحقق</button>
                       </div>
                       <p>اكتب السيريال تماماً كما هو مطبوع على الشهادة. يمكنك أيضاً لصقه مباشرة.</p>
@@ -2286,53 +2221,6 @@
       $('.role[data-v="admin"]').onclick = () => {
         location.hash = "admin";
         show("admin");
-      };
-
-      // Mobile-friendly serial paste UX:
-      // focus clears the hint, paste always replaces the old value,
-      // and the dedicated paste button reads the clipboard when allowed.
-      const serialInput = $("#serial");
-      const serialPlaceholder = serialInput.getAttribute("placeholder") || "";
-
-      serialInput.addEventListener("focus", () => {
-        serialInput.setAttribute("placeholder", "");
-      });
-
-      serialInput.addEventListener("blur", () => {
-        if (!serialInput.value.trim()) {
-          serialInput.setAttribute("placeholder", serialPlaceholder);
-        }
-      });
-
-      serialInput.addEventListener("paste", (event) => {
-        const text = event.clipboardData?.getData("text");
-        if (!text) return;
-        event.preventDefault();
-        serialInput.value = text.trim().toUpperCase();
-        serialInput.dispatchEvent(new Event("input", { bubbles: true }));
-      });
-
-      $("#pasteSerialBtn").onclick = async () => {
-        const button = $("#pasteSerialBtn");
-        try {
-          const text = await navigator.clipboard.readText();
-          if (text.trim()) {
-            serialInput.value = text.trim().toUpperCase();
-            serialInput.dispatchEvent(new Event("input", { bubbles: true }));
-            serialInput.focus();
-            button.textContent = "تم ✓";
-            button.classList.add("pasted");
-            setTimeout(() => {
-              button.textContent = "لصق";
-              button.classList.remove("pasted");
-            }, 1200);
-            return;
-          }
-        } catch (e) {}
-
-        serialInput.focus();
-        button.textContent = "الصق";
-        setTimeout(() => (button.textContent = "لصق"), 1400);
       };
 
       $("#verifyBtn").onclick = () => showCert(find($("#serial").value));
