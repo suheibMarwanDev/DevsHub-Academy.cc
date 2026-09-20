@@ -2296,9 +2296,6 @@
 
       serialInput.addEventListener("focus", () => {
         serialInput.setAttribute("placeholder", "");
-        if (serialInput.value) {
-          requestAnimationFrame(() => serialInput.select());
-        }
       });
 
       serialInput.addEventListener("blur", () => {
@@ -2334,7 +2331,6 @@
         } catch (e) {}
 
         serialInput.focus();
-        if (serialInput.value) serialInput.select();
         button.textContent = "الصق";
         setTimeout(() => (button.textContent = "لصق"), 1400);
       };
