@@ -1865,6 +1865,58 @@
   
     
 
+  
+    <style>
+      /* SERIAL EDITABLE HARD FIX v1 */
+      #verify #serial {
+        display: block !important;
+        position: relative !important;
+        z-index: 50 !important;
+        width: 100% !important;
+        height: 50px !important;
+        min-height: 50px !important;
+        max-height: 50px !important;
+        padding: 12px 13px !important;
+        overflow: hidden !important;
+        resize: none !important;
+        border: 1px solid #d4e0e5 !important;
+        border-radius: 5px !important;
+        outline: none !important;
+        background: #ffffff !important;
+        color: #17324d !important;
+        caret-color: #17324d !important;
+        font: 13px/24px monospace !important;
+        direction: ltr !important;
+        text-align: left !important;
+        pointer-events: auto !important;
+        user-select: text !important;
+        -webkit-user-select: text !important;
+        touch-action: manipulation !important;
+        opacity: 1 !important;
+        cursor: text !important;
+      }
+
+      #verify #serial:focus {
+        border-color: #0e7280 !important;
+        box-shadow: 0 0 0 3px #0e728017 !important;
+      }
+
+      #verify #serial::placeholder {
+        color: #98a7b0 !important;
+        opacity: 1 !important;
+      }
+
+      @media (max-width: 720px) {
+        #verify #serial {
+          height: 54px !important;
+          min-height: 54px !important;
+          max-height: 54px !important;
+          font-size: 16px !important;
+          line-height: 28px !important;
+        }
+      }
+    </style>
+
   </head>
   <body>
     <div class="wrap">
@@ -1904,13 +1956,15 @@
                     <div class="verify-search-card">
                       <label for="serial">الرقم التسلسلي</label>
                       <div class="entry">
-                        <input
+                        <textarea
                           id="serial"
-                          type="text"
+                          rows="1"
                           placeholder="أدخل السيريال المطبوع"
                           autocomplete="off"
+                          autocorrect="off"
                           spellcheck="false"
-                        />
+                          aria-label="الرقم التسلسلي"
+                        ></textarea>
                         <button class="primary" id="verifyBtn">← تحقق</button>
                       </div>
                       <p>اكتب السيريال تماماً كما هو مطبوع على الشهادة. يمكنك أيضاً لصقه مباشرة.</p>
@@ -2224,8 +2278,12 @@
       };
 
       $("#verifyBtn").onclick = () => showCert(find($("#serial").value));
-      $("#serial").onkeydown = (e) =>
-        e.key === "Enter" && showCert(find(e.target.value));
+      $("#serial").onkeydown = (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          showCert(find(e.target.value));
+        }
+      };
       $("#backBtn").onclick = () => {
         location.hash = "";
         show("verify");
