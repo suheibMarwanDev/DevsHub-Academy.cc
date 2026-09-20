@@ -2915,6 +2915,274 @@
       }
     </style>
 
+  
+    <style>
+      /* CREDENTIAL MOTION ENHANCEMENT v1 */
+
+      /* Keep the preview alive without making it feel like a game UI. */
+      .credential-visual {
+        isolation: isolate;
+        animation: credentialPanelBreath 7s ease-in-out infinite;
+      }
+
+      .credential-visual::before,
+      .credential-visual::after {
+        content: "";
+        position: absolute;
+        z-index: -1;
+        border-radius: 50%;
+        pointer-events: none;
+        filter: blur(8px);
+      }
+
+      .credential-visual::before {
+        width: 250px;
+        height: 250px;
+        top: -90px;
+        right: -80px;
+        background: #1dc6d516;
+        animation: credentialOrbOne 8s ease-in-out infinite alternate;
+      }
+
+      .credential-visual::after {
+        width: 210px;
+        height: 210px;
+        left: -85px;
+        bottom: -75px;
+        background: #0e728012;
+        animation: credentialOrbTwo 9s ease-in-out infinite alternate;
+      }
+
+      .live-label {
+        animation: liveLabelBreath 2.8s ease-in-out infinite;
+      }
+
+      .credential-preview {
+        transform-origin: center;
+        animation: previewFrameFloat 5.4s ease-in-out infinite;
+        box-shadow:
+          inset 0 0 0 1px #ffffff05,
+          0 15px 38px #00000018;
+      }
+
+      .credential-preview::before {
+        content: "";
+        position: absolute;
+        z-index: 4;
+        top: -18%;
+        left: -42%;
+        width: 34%;
+        height: 145%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          #ffffff08,
+          #ffffff26,
+          #ffffff08,
+          transparent
+        );
+        transform: rotate(12deg);
+        pointer-events: none;
+        animation: previewSweep 5.8s ease-in-out infinite;
+      }
+
+      .preview-certificate {
+        position: relative;
+        overflow: hidden;
+        transform-origin: center;
+        animation: certificateFloat 4.6s ease-in-out infinite;
+        will-change: transform;
+      }
+
+      .preview-certificate::after {
+        content: "";
+        position: absolute;
+        z-index: 3;
+        top: -15%;
+        left: -45%;
+        width: 34%;
+        height: 135%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          #ffffff16,
+          #ffffff78,
+          #ffffff16,
+          transparent
+        );
+        transform: rotate(10deg);
+        pointer-events: none;
+        animation: certificateShimmer 5.2s ease-in-out infinite;
+      }
+
+      .premium-beam {
+        box-shadow:
+          0 0 7px #44eaf5,
+          0 0 18px #26c9d5,
+          0 15px 34px 9px #1dc6d51f,
+          0 -15px 34px 9px #1dc6d51f !important;
+        animation: premiumScanEnhanced 2.9s cubic-bezier(.45,.02,.55,.98) infinite !important;
+      }
+
+      .preview-status {
+        animation: verifiedBadgePulse 2.4s ease-in-out infinite;
+      }
+
+      .verification-log > div {
+        transform: translateY(0);
+        animation: verificationCardFloat 4.8s ease-in-out infinite;
+        transition: border-color .2s ease, background .2s ease;
+      }
+
+      .verification-log > div:nth-child(1) {
+        animation-delay: 0s;
+      }
+
+      .verification-log > div:nth-child(2) {
+        animation-delay: .45s;
+      }
+
+      .verification-log > div:nth-child(3) {
+        animation-delay: .9s;
+      }
+
+      .verification-log > div:nth-child(1) .log-ok,
+      .verification-log > div:nth-child(2) .log-ok {
+        animation: checkPulse 3.2s ease-in-out infinite;
+      }
+
+      .verification-log > div:nth-child(2) .log-ok {
+        animation-delay: .45s;
+      }
+
+      .preview-meta span:first-child {
+        animation: serialGlow 3.5s ease-in-out infinite;
+      }
+
+      @keyframes credentialPanelBreath {
+        0%, 100% {
+          box-shadow: 0 28px 70px #061b2838;
+        }
+        50% {
+          box-shadow: 0 32px 78px #061b2848;
+        }
+      }
+
+      @keyframes credentialOrbOne {
+        from { transform: translate3d(0, 0, 0) scale(.92); opacity: .55; }
+        to { transform: translate3d(-26px, 25px, 0) scale(1.12); opacity: .95; }
+      }
+
+      @keyframes credentialOrbTwo {
+        from { transform: translate3d(0, 0, 0) scale(1); opacity: .4; }
+        to { transform: translate3d(32px, -24px, 0) scale(1.14); opacity: .78; }
+      }
+
+      @keyframes liveLabelBreath {
+        0%, 100% { opacity: .78; letter-spacing: 1.2px; }
+        50% { opacity: 1; letter-spacing: 1.55px; }
+      }
+
+      @keyframes previewFrameFloat {
+        0%, 100% { transform: translateY(0) rotateX(0deg); }
+        50% { transform: translateY(-5px) rotateX(.7deg); }
+      }
+
+      @keyframes previewSweep {
+        0%, 18% { left: -42%; opacity: 0; }
+        32% { opacity: .75; }
+        55% { left: 118%; opacity: .35; }
+        56%, 100% { left: 118%; opacity: 0; }
+      }
+
+      @keyframes certificateFloat {
+        0%, 100% { transform: translateY(0) rotateZ(0deg) scale(1); }
+        50% { transform: translateY(-7px) rotateZ(-.18deg) scale(1.006); }
+      }
+
+      @keyframes certificateShimmer {
+        0%, 22% { left: -45%; opacity: 0; }
+        34% { opacity: .65; }
+        58% { left: 118%; opacity: .75; }
+        59%, 100% { left: 118%; opacity: 0; }
+      }
+
+      @keyframes premiumScanEnhanced {
+        0%, 100% {
+          top: 72px;
+          opacity: .55;
+          transform: scaleX(.97);
+        }
+        48%, 52% {
+          opacity: 1;
+          transform: scaleX(1);
+        }
+        50% {
+          top: 337px;
+        }
+      }
+
+      @keyframes verifiedBadgePulse {
+        0%, 100% {
+          box-shadow: 0 0 0 0 #41b98c00;
+          border-color: #41b98c66;
+          background: #1b8f641d;
+        }
+        50% {
+          box-shadow: 0 0 18px 1px #41b98c24;
+          border-color: #5ad39d9c;
+          background: #1b8f642c;
+        }
+      }
+
+      @keyframes verificationCardFloat {
+        0%, 100% {
+          transform: translateY(0);
+          border-color: #ffffff12;
+          background: #ffffff08;
+        }
+        50% {
+          transform: translateY(-3px);
+          border-color: #1dc6d52b;
+          background: #ffffff0c;
+        }
+      }
+
+      @keyframes checkPulse {
+        0%, 100% {
+          transform: scale(1);
+          box-shadow: 0 0 0 0 #65d6ab00;
+        }
+        50% {
+          transform: scale(1.08);
+          box-shadow: 0 0 12px #65d6ab22;
+        }
+      }
+
+      @keyframes serialGlow {
+        0%, 100% { color: #806b48; }
+        50% { color: #a6762e; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .credential-visual,
+        .credential-visual::before,
+        .credential-visual::after,
+        .live-label,
+        .credential-preview,
+        .credential-preview::before,
+        .preview-certificate,
+        .preview-certificate::after,
+        .premium-beam,
+        .preview-status,
+        .verification-log > div,
+        .verification-log .log-ok,
+        .preview-meta span:first-child {
+          animation: none !important;
+        }
+      }
+    </style>
+
   </head>
   <body>
     <div class="wrap">
