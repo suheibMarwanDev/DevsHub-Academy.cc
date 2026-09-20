@@ -1,0 +1,1488 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>DevsHub Academy.cc | بوابة التحقق من الشهادات</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+      :root {
+        --ink: #10233f;
+        --sub: #6e7c93;
+        --p: #6366f1;
+        --pp: #eef0fd;
+        --line: #e5e9f2;
+        --good: #139b70;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at 92% 2%, #e1e5ff, transparent 26rem), #fafbff;
+        color: var(--ink);
+        font-family: Cairo, Tahoma, sans-serif;
+      }
+      .wrap {
+        width: min(1080px, calc(100% - 34px));
+        margin: auto;
+      }
+      .top {
+        height: 84px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .brand {
+        direction: ltr;
+        display: flex;
+        gap: 9px;
+        align-items: center;
+        font-weight: 800;
+        font-size: 20px;
+      }
+      .brand svg {
+        width: 36px;
+      }
+      .brand span span {
+        font-weight: 400;
+      }
+      .switch {
+        background: white;
+        padding: 5px;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        box-shadow: 0 8px 18px #26376d0b;
+      }
+      .switch button {
+        border: 0;
+        background: transparent;
+        color: #68768d;
+        border-radius: 9px;
+        padding: 8px 13px;
+        font: 700 11px Cairo;
+        cursor: pointer;
+      }
+      .switch button.active {
+        background: #0b1220;
+        color: white;
+      }
+      .view {
+        display: none;
+      }
+      .view.active {
+        display: block;
+      }
+      .hero {
+        display: grid;
+        grid-template-columns: 1fr 0.9fr;
+        gap: 60px;
+        align-items: center;
+        padding: 42px 0;
+      }
+      .tag {
+        display: inline-block;
+        color: #4f46e5;
+        background: white;
+        border: 1px solid #dce1fb;
+        border-radius: 30px;
+        padding: 7px 11px;
+        font-size: 11px;
+        font-weight: 700;
+      }
+      .hero h1 {
+        font-size: clamp(38px, 5vw, 59px);
+        line-height: 1.3;
+        letter-spacing: -2px;
+        margin: 14px 0;
+      }
+      .hero h1 em {
+        font-style: normal;
+        color: #4f46e5;
+      }
+      .hero p {
+        color: var(--sub);
+        line-height: 2;
+        font-size: 15px;
+      }
+      .mock {
+        background: linear-gradient(145deg, #fff, #f4f5ff);
+        border: 1px solid #e1e5f0;
+        box-shadow: 0 23px 50px #22366d1b;
+        border-radius: 21px;
+        min-height: 260px;
+        padding: 25px;
+        transform: rotate(-3deg);
+        position: relative;
+        overflow: hidden;
+      }
+      .mock:after {
+        content: "";
+        position: absolute;
+        width: 190px;
+        height: 190px;
+        border-radius: 50%;
+        background: #e1e4ff;
+        left: -85px;
+        bottom: -105px;
+      }
+      .mockhead {
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+        z-index: 1;
+      }
+      .seal {
+        background: #eafbef;
+        color: var(--good);
+        border-radius: 50%;
+        width: 34px;
+        height: 34px;
+        display: grid;
+        place-items: center;
+      }
+      .mock small {
+        position: relative;
+        z-index: 1;
+        display: block;
+        margin-top: 28px;
+        color: #8793a8;
+        letter-spacing: 1px;
+      }
+      .mock h3 {
+        position: relative;
+        z-index: 1;
+        margin: 8px 0 2px;
+        font-size: 21px;
+      }
+      .mock p {
+        position: relative;
+        z-index: 1;
+        margin: 0;
+        font-size: 12px;
+      }
+      .bars {
+        position: absolute;
+        z-index: 1;
+        bottom: 24px;
+        left: 25px;
+        width: 70px;
+        height: 28px;
+        background: repeating-linear-gradient(
+          90deg,
+          #203654 0 2px,
+          transparent 2px 4px,
+          #203654 4px 7px,
+          transparent 7px 9px
+        );
+      }
+      .card {
+        display: grid;
+        grid-template-columns: 0.8fr 1.2fr;
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 18px 43px #20366e12;
+      }
+      .scan {
+        padding: 32px;
+        background: linear-gradient(145deg, #f0f2ff, #fbfbff);
+        border-left: 1px solid var(--line);
+      }
+      .kicker {
+        font-size: 11px;
+        color: var(--p);
+        font-weight: 800;
+        letter-spacing: 0.7px;
+      }
+      h2 {
+        margin: 9px 0 5px;
+        font-size: 23px;
+      }
+      .scan p,
+      .form > p {
+        font-size: 13px;
+        line-height: 1.9;
+        color: var(--sub);
+        margin: 0;
+      }
+      .scanner {
+        height: 130px;
+        margin-top: 20px;
+        border: 1px dashed #bec5f5;
+        border-radius: 14px;
+        background: white;
+        display: grid;
+        place-items: center;
+        position: relative;
+        overflow: hidden;
+      }
+      .scanner:before {
+        content: "";
+        width: 65%;
+        height: 53%;
+        border: 2px solid var(--p);
+        border-radius: 9px;
+        position: absolute;
+      }
+      .scanner:after {
+        content: "";
+        position: absolute;
+        right: 18%;
+        left: 18%;
+        height: 2px;
+        background: #b8f275;
+        animation: s 2.5s infinite;
+      }
+      .barcode {
+        z-index: 1;
+        width: 100px;
+        height: 40px;
+        background: repeating-linear-gradient(
+          90deg,
+          #223858 0 2px,
+          transparent 2px 4px,
+          #223858 4px 7px,
+          transparent 7px 9px
+        );
+      }
+      .form {
+        padding: 32px;
+      }
+      .form label {
+        display: block;
+        font-size: 12px;
+        font-weight: 700;
+        margin: 19px 0 8px;
+        color: #516078;
+      }
+      .entry {
+        display: flex;
+        gap: 8px;
+        direction: ltr;
+      }
+      .entry input,
+      .field input {
+        width: 100%;
+        border: 1px solid #dce1ed;
+        border-radius: 10px;
+        padding: 11px;
+        outline: none;
+        font: 13px monospace;
+      }
+      .entry input:focus,
+      .field input:focus {
+        border-color: var(--p);
+        box-shadow: 0 0 0 4px #6366f117;
+      }
+      .primary {
+        border: 0;
+        background: linear-gradient(130deg, #6366f1, #4f46e5);
+        color: white;
+        border-radius: 10px;
+        padding: 0 16px;
+        font: 700 12px Cairo;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 9px;
+        margin-top: 10px;
+      }
+      .soft {
+        border: 1px solid #dee2fc;
+        background: #f3f4ff;
+        color: #4e52c8;
+        border-radius: 10px;
+        min-height: 41px;
+        font: 700 11px Cairo;
+        cursor: pointer;
+      }
+      .upload {
+        display: grid;
+        place-items: center;
+      }
+      .upload input {
+        display: none;
+      }
+      .tip {
+        font-size: 11px;
+        color: #758198;
+        background: #fafbfe;
+        border: 1px solid #edf0f5;
+        border-radius: 9px;
+        padding: 9px;
+        margin-top: 13px;
+      }
+      .tip b {
+        color: #4f46e5;
+        font-family: monospace;
+      }
+      .admin {
+        padding: 25px 0 70px;
+      }
+      .adminhead {
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        margin-bottom: 21px;
+      }
+      .adminhead h1 {
+        font-size: 31px;
+        margin: 0;
+      }
+      .adminhead p {
+        font-size: 13px;
+        color: var(--sub);
+        margin: 4px 0 0;
+      }
+      .add {
+        min-height: 42px;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+      }
+      .stat {
+        padding: 16px;
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 15px;
+      }
+      .stat span {
+        font-size: 11px;
+        color: #77839a;
+      }
+      .stat b {
+        font-size: 24px;
+        display: block;
+        margin-top: 3px;
+      }
+      .box {
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 19px;
+        margin-top: 15px;
+        overflow: hidden;
+      }
+      .toolbar {
+        padding: 15px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .toolbar h3 {
+        margin: 0;
+        font-size: 14px;
+      }
+      .search {
+        border: 1px solid #dfe4ed;
+        border-radius: 9px;
+        padding: 8px 10px;
+        font: 11px Cairo;
+        outline: none;
+      }
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .table th {
+        background: #fafbfe;
+        color: #8793a7;
+        font-size: 10px;
+        padding: 11px 15px;
+        text-align: right;
+      }
+      .table td {
+        padding: 13px 15px;
+        border-top: 1px solid #eff1f5;
+        color: #617087;
+        font-size: 11px;
+      }
+      .table td b {
+        color: #243a59;
+      }
+      .badge {
+        padding: 4px 8px;
+        border-radius: 20px;
+        background: #eafaf0;
+        color: #168859;
+        font-size: 10px;
+        font-weight: 800;
+      }
+      .link {
+        border: 0;
+        background: transparent;
+        color: #555bd0;
+        font: 700 11px Cairo;
+        cursor: pointer;
+      }
+      .cert-page {
+        padding: 30px 0 60px;
+      }
+      .back {
+        border: 0;
+        background: transparent;
+        color: #5961d2;
+        font: 700 12px Cairo;
+        cursor: pointer;
+      }
+      .cert-full {
+        max-width: 840px;
+        margin: 18px auto;
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 23px;
+        overflow: hidden;
+        box-shadow: 0 25px 60px #23396b18;
+      }
+      .cert-top {
+        height: 130px;
+        background: linear-gradient(115deg, #0d1e38, #344278);
+        color: white;
+        padding: 25px;
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+      }
+      .cert-top h1 {
+        font-size: 25px;
+        margin: 0;
+      }
+      .cert-top p {
+        opacity: 0.75;
+        font-size: 12px;
+        margin: 5px 0;
+      }
+      .cert-body {
+        text-align: center;
+        padding: 38px;
+      }
+      .ribbon {
+        color: #4f46e5;
+        font-size: 11px;
+        letter-spacing: 1px;
+        font-weight: 800;
+      }
+      .cert-body h2 {
+        font-size: 33px;
+        margin: 14px 0 4px;
+      }
+      .course {
+        color: #65738b;
+        font-size: 15px;
+      }
+      .cert-data {
+        margin: 27px auto;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        max-width: 620px;
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+      }
+      .cert-data div {
+        padding: 14px;
+        border-left: 1px solid var(--line);
+        font-size: 11px;
+        color: #8793a8;
+      }
+      .cert-data div:last-child {
+        border: 0;
+      }
+      .cert-data b {
+        display: block;
+        color: #344460;
+        font-size: 12px;
+        margin-top: 4px;
+      }
+      .download {
+        min-height: 47px;
+      }
+      .modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: #20335170;
+        z-index: 20;
+        place-items: center;
+        padding: 16px;
+        backdrop-filter: blur(5px);
+      }
+      .modal.show {
+        display: grid;
+      }
+      .dialog {
+        background: #fff;
+        border-radius: 20px;
+        width: min(100%, 420px);
+        padding: 22px;
+        box-shadow: 0 25px 70px #12234355;
+      }
+      .dialog h2 {
+        margin-top: 0;
+      }
+      .dialog p {
+        font-size: 12px;
+        color: var(--sub);
+      }
+      .field {
+        margin-top: 12px;
+      }
+      .field label {
+        display: block;
+        font-size: 11px;
+        font-weight: 700;
+        margin-bottom: 5px;
+      }
+      .dialog-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 18px;
+      }
+      .cancel {
+        border: 0;
+        background: #f1f3f7;
+        color: #647087;
+        border-radius: 10px;
+        padding: 0 15px;
+        font: 700 12px Cairo;
+        min-height: 43px;
+      }
+      .camera {
+        height: 230px;
+        background: #12233b;
+        color: white;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        position: relative;
+        overflow: hidden;
+      }
+      .camera video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .frame {
+        position: absolute;
+        width: 70%;
+        height: 42%;
+        border: 2px solid #b8f275;
+        border-radius: 9px;
+      }
+      .line {
+        position: absolute;
+        right: 15%;
+        left: 15%;
+        height: 2px;
+        background: #b8f275;
+        animation: s 2s infinite;
+      }
+      .result {
+        text-align: center;
+      }
+      .icon {
+        margin: auto;
+        width: 68px;
+        height: 68px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: #eafbef;
+        color: var(--good);
+        font-size: 28px;
+      }
+      .serial {
+        display: block;
+        background: #f5f6fc;
+        color: #4f46e5;
+        padding: 9px;
+        border-radius: 9px;
+        margin: 12px 0;
+        font: 700 12px monospace;
+        direction: ltr;
+      }
+      .hidden {
+        display: none;
+      }
+      @keyframes s {
+        0%,
+        100% {
+          top: 22%;
+        }
+        50% {
+          top: 74%;
+        }
+      }
+      @media (max-width: 720px) {
+        .wrap {
+          width: min(100% - 26px, 540px);
+        }
+        .top {
+          height: 73px;
+        }
+        .brand {
+          font-size: 17px;
+        }
+        .brand svg {
+          width: 31px;
+        }
+        .switch button {
+          padding: 7px 8px;
+          font-size: 10px;
+        }
+        .hero {
+          display: block;
+          padding: 29px 0 18px;
+        }
+        .hero h1 {
+          font-size: 39px;
+        }
+        .mock {
+          margin-top: 25px;
+        }
+        .card {
+          display: block;
+        }
+        .scan {
+          border: 0;
+          border-bottom: 1px solid var(--line);
+          padding: 24px;
+        }
+        .form {
+          padding: 24px;
+        }
+        .adminhead {
+          display: block;
+        }
+        .adminhead .add {
+          margin-top: 12px;
+        }
+        .stats {
+          grid-template-columns: 1fr 1fr;
+        }
+        .toolbar {
+          display: block;
+        }
+        .search {
+          width: 100%;
+          margin-top: 10px;
+        }
+        .box {
+          overflow: auto;
+        }
+        .table {
+          min-width: 530px;
+        }
+        .cert-data {
+          grid-template-columns: 1fr;
+        }
+        .cert-data div {
+          border-left: 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .cert-body h2 {
+          font-size: 28px;
+        }
+        .modal {
+          align-items: end;
+          padding: 0;
+        }
+        .dialog {
+          border-radius: 20px 20px 0 0;
+          width: 100%;
+        }
+      }
+    </style>
+    <style>
+      :root { --ink: #17324d; --sub: #64748b; --p: #0f4c5c; --pp: #eaf3f5; --line: #d9e3ea; --good: #18745b; }
+      body { background: linear-gradient(180deg, #f6f9fb 0, #fff 38rem); letter-spacing: 0; }
+      .wrap { width: min(1120px, calc(100% - 44px)); }
+      .top { height: 88px; border-bottom: 1px solid #e3eaf0; }
+      .brand { color: #132d46; font-size: 19px; }
+      .brand .academy { color: #0f6b78; font-weight: 800; }
+      .brand svg path:last-child { fill: #0f6b78; }
+      .switch { padding: 4px; border-radius: 6px; box-shadow: none; background: #fff; }
+      .switch button { border-radius: 4px; padding: 9px 15px; color: #64748b; font-size: 12px; }
+      .switch button.active { background: #17324d; }
+      .hero { gap: 72px; padding: 58px 0 46px; }
+      .tag { border-radius: 4px; border-color: #cbdce5; background: #f4f8fa; color: #0f4c5c; padding: 7px 10px; font-size: 11px; }
+      .hero h1 { font-size: clamp(36px, 4.6vw, 56px); line-height: 1.38; letter-spacing: -1.3px; font-weight: 800; }
+      .hero h1 em { color: #0f5b6c; }
+      .hero p { max-width: 570px; font-size: 16px; line-height: 2.05; }
+      .assurances { display: flex; flex-wrap: wrap; gap: 10px 18px; margin-top: 22px; color: #496277; font-size: 12px; font-weight: 700; }
+      .assurances span { display: inline-flex; align-items: center; gap: 5px; }
+      .mock { transform: none; border-radius: 8px; border-top: 5px solid #17324d; box-shadow: 0 18px 38px #17324d18; background: linear-gradient(135deg, #fff, #f2f7f8); }
+      .mock:before { content: "ACCREDITED"; position: absolute; top: 25px; left: -22px; padding: 5px 30px; transform: rotate(-38deg); color: #0f5b6c; border: 1px solid #9ac1c8; font: 800 9px Arial, sans-serif; letter-spacing: 1.5px; opacity: .45; }
+      .mock:after { background: #dcecef; }
+      .seal { border-radius: 4px; background: #e5f2ed; color: #18745b; }
+      .card { border-radius: 8px; box-shadow: 0 16px 36px #17324d10; }
+      .scan { padding: 34px; background: #f4f8fa; border-left-color: #d9e3ea; }
+      .scan h2, .form h2 { font-weight: 800; letter-spacing: -.45px; }
+      .kicker, .ribbon { color: #0f5b6c; }
+      .scanner { border-radius: 6px; border-color: #aec6cf; }
+      .scanner:before { border-color: #0f5b6c; border-radius: 4px; }
+      .scanner:after, .line { background: #2c9b85; }
+      .form { padding: 34px; }
+      .form label { color: #39536a; }
+      .entry input, .field input { border-radius: 5px; border-color: #cdd9e1; padding: 13px; }
+      .entry input:focus, .field input:focus { border-color: #0f5b6c; box-shadow: 0 0 0 3px #0f4c5c17; }
+      .primary { border-radius: 5px; min-height: 44px; background: #17324d; font-size: 12px; box-shadow: 0 5px 12px #17324d1f; }
+      .primary:hover { background: #0f4c5c; }
+      .soft { border-radius: 5px; border-color: #ccdce3; background: #f7fafb; color: #20566a; }
+      .tip { border-radius: 5px; background: #f8fafb; color: #64748b; }
+      .tip b, .serial { color: #0f5b6c; }
+      .admin { padding-top: 42px; }
+      .adminhead h1 { font-size: 32px; letter-spacing: -.8px; }
+      .stat { border-radius: 6px; padding: 19px; border-top: 3px solid #17324d; box-shadow: 0 6px 16px #17324d08; }
+      .box { border-radius: 7px; box-shadow: 0 8px 24px #17324d0a; }
+      .toolbar { padding: 18px; }
+      .search, .badge, .cancel, .serial { border-radius: 5px; }
+      .table th { background: #f4f7f9; color: #52677a; padding: 12px 16px; }
+      .table td { padding: 14px 16px; }
+      .badge { background: #e5f2ed; color: #176348; }
+      .link, .back { color: #0f5b6c; }
+      .cert-page { padding-top: 34px; }
+      .cert-full { border-radius: 7px; border-color: #cfdde4; box-shadow: 0 24px 56px #17324d1c; }
+      .cert-top { height: 144px; padding: 28px; background: linear-gradient(120deg, #17324d, #245c70); border-bottom: 4px solid #b89356; }
+      .cert-top b { color: #f4d398; letter-spacing: .7px; }
+      .cert-body { position: relative; padding: 44px; background: linear-gradient(90deg, #fff, #fbfcfc, #fff); }
+      .cert-body:before { content: ""; position: absolute; inset: 14px; border: 1px solid #d9e3ea; pointer-events: none; }
+      .cert-body > * { position: relative; }
+      .cert-body h2 { color: #17324d; }
+      .cert-data, .cert-data div { border-color: #d9e3ea; }
+      .cert-data b { color: #17324d; }
+      .modal { background: #102b3e75; }
+      .dialog { border-radius: 7px; box-shadow: 0 25px 70px #102b3e45; }
+      .camera { border-radius: 6px; background: #17324d; }
+      .frame { border-color: #66b7a4; border-radius: 4px; }
+      .icon { border-radius: 5px; background: #e5f2ed; }
+      /* Presentation direction: enterprise credential platform */
+      body { background: #061b28; color: #eef7fb; }
+      .top { border-color: #ffffff1c; }
+      .brand { color: #fff; }
+      .brand .academy, .brand svg path:last-child { color: #1ec5d5; fill: #1ec5d5; }
+      .switch { background: #ffffff0d; border-color: #ffffff24; }
+      .switch button { color: #b8cbd5; }
+      .switch button.active { background: #edf7f9; color: #0d2a38; }
+      #verify { overflow: hidden; }
+      #verify .showcase { position: relative; grid-template-columns: .86fr 1.14fr; gap: 35px; min-height: 590px; padding: 68px 0 74px; }
+      #verify .showcase:before { content: ""; position: absolute; z-index: 0; width: 780px; height: 780px; right: 43%; top: -170px; border-radius: 50%; background: radial-gradient(circle at 56% 47%, #e9f1f5 0, #b9c9d3 54%, #8ea4b3 100%); opacity: .96; }
+      #verify .showcase:after { content: ""; position: absolute; inset: 50px auto auto -180px; width: 720px; height: 630px; border: 1px solid #27c5d31a; border-radius: 50%; pointer-events: none; }
+      .hero-copy, .visual-stage { position: relative; z-index: 1; }
+      .hero-copy { padding-top: 52px; }
+      .tag { background: #0c3141; border-color: #1f6575; color: #72dae3; letter-spacing: .5px; }
+      .hero h1 { color: #f7fbfd; font-size: clamp(43px, 5vw, 65px); line-height: 1.23; letter-spacing: -2px; margin-top: 20px; }
+      .hero h1 em { color: #11b5c8; }
+      .hero p { color: #bdd0da; font-size: 17px; line-height: 2.05; max-width: 515px; }
+      .assurances { border-top: 1px solid #ffffff22; padding-top: 25px; margin-top: 30px; gap: 12px 0; display: grid; grid-template-columns: 1fr 1fr; color: #dbe9ee; font-size: 12px; }
+      .assurances span { gap: 8px; }
+      .assurances i { color: #22c3d2; font-style: normal; font-size: 21px; line-height: 1; }
+      .visual-stage { min-height: 490px; direction: ltr; }
+      .trust-chip { position: absolute; top: -12px; right: 5px; z-index: 4; display: flex; align-items: center; gap: 9px; padding: 12px 19px; border: 1px solid #ffffff80; border-radius: 30px; background: #f8fbfcde; color: #102a39; box-shadow: 0 12px 26px #102b3a1c; font-size: 13px; }
+      .trust-chip:first-letter { color: #117588; }
+      .dash-window { position: absolute; top: 60px; right: 0; width: min(100%, 640px); min-height: 380px; display: grid; grid-template-columns: 175px 1fr; overflow: hidden; border: 1px solid #ffffff95; border-radius: 13px; background: #fff; color: #122b39; box-shadow: 0 30px 65px #071c2b48; }
+      .dash-nav { padding: 23px 15px; background: linear-gradient(160deg, #082a39, #041a27); color: #c4d6de; font-size: 10px; }
+      .dash-logo { display: flex; align-items: center; gap: 8px; margin: 0 5px 26px; color: #fff; font-size: 11px; line-height: 1.18; }
+      .dash-logo:first-letter { color: #22c3d2; font-size: 18px; }
+      .dash-nav span { display: block; margin-top: 8px; padding: 9px 8px; border-radius: 5px; }
+      .dash-nav .nav-active { background: linear-gradient(90deg, #0e6576, #0b3b4b); color: #fff; }
+      .dash-main { padding: 23px 25px; background: #fbfdfe; }
+      .dash-main h2 { margin: 0 0 17px; color: #102534; font: 800 19px Cairo, sans-serif; }
+      .dash-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+      .dash-stats > div { position: relative; min-height: 84px; padding: 11px; border: 1px solid #e1e9ed; border-radius: 7px; background: #fff; box-shadow: 0 5px 13px #1533440a; }
+      .dash-stats small { display: block; color: #637887; font-size: 8px; }
+      .dash-stats b { display: block; margin-top: 8px; padding-left: 28px; direction: ltr; color: #102a39; font: 800 19px Arial, sans-serif; text-align: right; white-space: nowrap; }
+      .dash-stats i { position: absolute; left: 10px; bottom: 11px; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 5px; background: #eaf5f5; color: #0d7986; font-style: normal; font-size: 12px; }
+      .dash-table { margin-top: 19px; padding: 14px; border: 1px solid #e0e9ed; border-radius: 7px; background: #fff; font-size: 8px; }
+      .dash-table > b { display: block; margin-bottom: 10px; color: #233f4f; font-size: 10px; }
+      .dash-table > div { display: grid; grid-template-columns: 1.25fr 1fr 1fr .75fr; gap: 5px; padding: 9px 2px; border-top: 1px solid #edf1f3; color: #526976; }
+      .dash-table .dash-head { color: #91a2aa; font-size: 7px; }
+      .dash-table strong { color: #168155; font-weight: 800; }
+      .verify-float { position: absolute; z-index: 5; left: 0; bottom: -21px; display: grid; grid-template-columns: 1.1fr .9fr; width: 432px; padding: 15px; border: 1px solid #d9e6e8; border-radius: 12px; background: #fff; color: #1a3341; box-shadow: 0 18px 42px #041c2929; }
+      .verify-float > div:first-child { position: relative; padding: 4px 94px 4px 4px; direction: rtl; }
+      .verify-float small { display: block; color: #657b88; font-size: 9px; }
+      .verify-float > div:first-child b { display: block; margin-top: 6px; direction: ltr; color: #102a38; font: 800 11px Arial, sans-serif; letter-spacing: .2px; text-align: right; white-space: nowrap; }
+      .mini-qr { position: absolute; top: 4px; right: 2px; width: 68px; height: 68px; background: repeating-linear-gradient(90deg, #0c2533 0 4px, #fff 4px 7px, #0c2533 7px 10px, #fff 10px 13px), repeating-linear-gradient(0deg, #0c2533 0 4px, transparent 4px 8px); outline: 5px solid #fff; }
+      .float-result { display: grid; place-content: center; text-align: center; border: 1px solid #b9ded2; border-radius: 8px; background: linear-gradient(135deg, #f0fbf6, #e2f4ec); }
+      .float-result i { display: grid; place-items: center; width: 33px; height: 33px; margin: auto; border-radius: 50%; background: #168151; color: #fff; font-style: normal; font-size: 19px; }
+      .float-result b { margin-top: 5px; color: #11633e; font: 800 13px Cairo, sans-serif; }
+      .float-result small { margin-top: 2px; font-size: 8px; }
+      .live-verifier { position: relative; z-index: 6; margin-top: -15px; border-color: #d9e6ea; box-shadow: 0 22px 48px #0000002e; }
+      .live-verifier .scan { background: #f3f8f9; }
+      .live-verifier .form { color: #17324d; }
+      .live-verifier h2 { color: #17324d; }
+      .live-verifier .scan p, .live-verifier .form > p { color: #607786; }
+      .live-verifier .primary { background: #0c5365; }
+      .live-verifier .primary:hover { background: #0c3b4b; }
+      #admin { position: relative; right: 50%; width: 100vw; margin-right: -50vw; min-height: calc(100vh - 88px); background: #f4f8f9; color: #17324d; }
+      #admin .admin { width: min(1120px, calc(100% - 44px)); margin: auto; padding: 48px 0 76px; }
+      #admin .adminhead h1 { color: #102a39; }
+      #admin .adminhead p { color: #607786; }
+      #admin .stat { border-top-color: #0e7280; }
+      #admin .stat b { color: #102a39; }
+      #admin .table td b { color: #17324d; }
+      /* Separate working surfaces: verification first, real administration second. */
+      #verify .verify-hero { position: relative; grid-template-columns: 1fr .8fr; gap: 70px; min-height: 310px; padding: 52px 0 30px; }
+      #verify .verify-hero:before { width: 520px; height: 520px; right: -145px; top: -210px; opacity: .34; background: radial-gradient(circle, #1a9cac 0, #0e5363 44%, transparent 70%); }
+      #verify .verify-hero:after { display: none; }
+      #verify .verify-hero .hero-copy { padding-top: 10px; }
+      #verify .verify-hero h1 { margin: 12px 0; font-size: clamp(38px, 4vw, 53px); }
+      #verify .verify-hero p { max-width: 550px; font-size: 15px; }
+      #verify .verify-hero .assurances { margin-top: 18px; padding-top: 17px; }
+      .verify-accent { position: relative; min-height: 292px; overflow: hidden; border: 1px solid #2b7080; border-radius: 12px; background: linear-gradient(145deg, #123b4a, #071e2b); box-shadow: inset 0 1px #ffffff12, 0 20px 45px #00000024; }
+      .accent-ring { position: absolute; border: 1px solid #45bdca38; border-radius: 50%; }
+      .ring-one { width: 290px; height: 290px; left: -95px; bottom: -145px; }
+      .ring-two { width: 190px; height: 190px; left: -42px; bottom: -94px; border-color: #45bdca20; }
+      .certificate-preview { position: absolute; z-index: 2; top: 15px; left: 50%; width: min(400px, calc(100% - 32px)); min-height: 260px; padding: 17px 36px 13px; transform: translateX(-50%); overflow: hidden; border: 8px double #b9904a; border-radius: 2px; background: linear-gradient(135deg, #fffefa, #f5efe1); color: #1a3341; box-shadow: 0 16px 30px #00000025; text-align: center; }
+      .certificate-preview:before, .certificate-preview:after { content: ""; position: absolute; width: 88px; height: 88px; border: 1px solid #c09a58; opacity: .5; }
+      .certificate-preview:before { top: -62px; right: -62px; transform: rotate(45deg); }
+      .certificate-preview:after { bottom: -62px; left: -62px; transform: rotate(45deg); }
+      .certificate-brand { position: relative; z-index: 1; color: #17324d; font: 800 12px Arial, sans-serif; direction: ltr; }
+      .certificate-brand b { color: #0b8da0; }
+      .certificate-brand span { font-weight: 400; }
+      .certificate-ribbon { position: relative; z-index: 1; display: block; margin-top: 9px; color: #9a7440; font: 800 8px Arial, sans-serif; letter-spacing: 1.1px; }
+      .certificate-preview h3 { position: relative; z-index: 1; margin: 5px 0 2px; color: #162c42; font-size: 23px; line-height: 1.25; }
+      .certificate-preview p { position: relative; z-index: 1; margin: 0; color: #6e7d87; font-size: 10px; line-height: 1.5; }
+      .certificate-preview .certificate-intro { margin-top: 4px; }
+      .certificate-preview h4 { position: relative; z-index: 1; margin: 2px 0 3px; color: #1d596b; font: 700 22px Georgia, serif; direction: ltr; }
+      .certificate-preview .certificate-course { white-space: nowrap; }
+      .certificate-preview p b { color: #304c5a; }
+      .certificate-signatures { position: relative; z-index: 1; display: flex; justify-content: space-between; margin: 7px 6px 0; color: #9a7440; font: 700 8px Cairo, sans-serif; }
+      .certificate-meta { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; margin-top: 5px; padding-top: 5px; border-top: 1px solid #decda9; }
+      .certificate-meta span { direction: ltr; font: 800 9px Arial, sans-serif; }
+      .certificate-meta i { width: 27px; height: 27px; background: repeating-linear-gradient(90deg, #1b3340 0 3px, transparent 3px 5px), repeating-linear-gradient(0deg, #1b3340 0 3px, transparent 3px 5px); }
+      .certificate-seal { position: absolute; z-index: 2; top: 14px; left: 14px; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #168354; color: #fff; font-size: 14px; font-weight: 900; box-shadow: 0 0 0 3px #e8f4ea; }
+      .live-verifier { margin-top: 0; box-shadow: 0 20px 42px #0000002b; }
+      #admin { right: auto; width: 100%; margin: 0; min-height: 720px; background: #edf4f6; color: #17324d; }
+      .admin-shell { display: grid; grid-template-columns: 220px 1fr; min-height: 720px; background: #fff; box-shadow: 0 22px 55px #061b281f; }
+      .admin-sidebar { display: flex; flex-direction: column; padding: 27px 16px; background: linear-gradient(160deg, #082b3a, #041a27); color: #c8dce3; }
+      .side-brand { display: flex; align-items: center; gap: 10px; margin: 0 8px 35px; color: #fff; font-size: 13px; line-height: 1.2; direction: ltr; }
+      .side-brand span { color: #1dc6d5; font-size: 22px; }
+      .admin-sidebar nav { display: grid; gap: 7px; }
+      .admin-sidebar button { border: 0; border-radius: 5px; background: transparent; color: #c8dce3; padding: 11px 10px; text-align: right; font: 700 11px Cairo, sans-serif; cursor: pointer; }
+      .admin-sidebar button.side-active { background: linear-gradient(90deg, #0e7280, #0a4353); color: #fff; }
+      .side-footer { margin-top: auto; border: 0; border-top: 1px solid #ffffff18; background: transparent; color: #c8dce3; padding: 11px 10px; text-align: right; font: 700 11px Cairo, sans-serif; cursor: pointer; }
+      .admin-content { min-width: 0; padding: 42px 42px 55px; background: #f8fbfc; }
+      #admin .adminhead { margin-bottom: 29px; }
+      #admin .adminhead h1 { font-size: 29px; }
+      #admin .stats { grid-template-columns: repeat(4, 1fr); gap: 14px; }
+      #admin .stat { position: relative; min-height: 112px; padding: 18px; border-top: 0; border-radius: 8px; box-shadow: 0 6px 16px #17324d0b; }
+      #admin .stat b { margin-top: 10px; font-size: 25px; }
+      #admin .stat i { position: absolute; left: 15px; bottom: 16px; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 5px; background: #e8f3f5; color: #0c7180; font-style: normal; font-size: 13px; }
+      #admin .box { margin-top: 20px; border-radius: 8px; }
+      #admin .toolbar { padding: 18px 20px; }
+      #admin .table th { padding: 13px 18px; font-size: 11px; }
+      #admin .table td { padding: 15px 18px; font-size: 11px; }
+      body[data-view="verify"] { background: #f7f7fb; }
+      #verify { position: relative; right: 50%; width: 100vw; margin-right: -50vw; min-height: calc(100vh - 88px); background: #f7f7fb; color: #17263b; }
+      .verify-page { width: min(100% - 40px, 680px); margin: auto; padding: 64px 0 72px; }
+      .verify-eyebrow { color: #5b4bb6; font-size: 11px; font-weight: 800; letter-spacing: .8px; }
+      .verify-layout h1 { margin: 12px 0 9px; color: #18243a; font-size: clamp(34px, 4.4vw, 52px); line-height: 1.25; letter-spacing: -1.2px; }
+      .verify-lead { max-width: 550px; margin: 0; color: #667085; font-size: 16px; line-height: 1.8; }
+      .verify-search-card { margin-top: 30px; padding: 30px; border: 1px solid #e2e3ea; border-radius: 22px; background: #fff; box-shadow: 0 18px 42px #30345f12; }
+      .verify-search-card > label { display: block; margin-bottom: 8px; color: #263247; font-size: 13px; font-weight: 800; }
+      .verify-search-card .entry { gap: 10px; }
+      .verify-search-card .entry input { min-height: 51px; border-radius: 10px; background: #fafaff; font-size: 14px; }
+      .verify-search-card .primary { min-width: 110px; min-height: 51px; border-radius: 10px; background: #5143ad; }
+      .verify-search-card .primary:hover { background: #40348f; }
+      .verify-search-card > p { margin: 10px 0 0; color: #768196; font-size: 12px; line-height: 1.7; }
+      .verify-or { display: flex; align-items: center; gap: 12px; margin: 22px 0; color: #8a92a4; font-size: 12px; }
+      .verify-or:before, .verify-or:after { content: ""; flex: 1; height: 1px; background: #e7e8ee; }
+      .verify-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .verify-actions .soft { min-height: 49px; border-radius: 10px; border-color: #dcd8f1; background: #f7f5ff; color: #5548a5; }
+      .verify-note { margin: 20px 2px 0; color: #7b8495; font-size: 11px; line-height: 1.8; }
+      #verify .tip { display: inline-block; margin-top: 11px; background: transparent; border: 0; padding: 0; color: #6f7890; }
+      #verify .tip b { color: #5143ad; }
+      .field-help { margin: 6px 0 0; color: #7b8795; font-size: 10px; line-height: 1.7; }
+      #newPdf { padding: 9px; font: 11px Cairo, sans-serif; }
+      body[data-view="certificate"] { background: #f1f5f7; }
+      #certificate { position: relative; right: 50%; width: 100vw; margin-right: -50vw; min-height: calc(100vh - 88px); background: #f1f5f7; }
+      .cert-page { width: min(100% - 44px, 1100px); margin: auto; padding: 34px 0 60px; }
+      .verification-result { margin-top: 16px; }
+      .result-status { display: flex; align-items: center; gap: 14px; padding: 17px 21px; border: 1px solid #bde3d2; border-radius: 10px; background: #effaf4; color: #164b37; }
+      .result-status > span { display: grid; place-items: center; width: 37px; height: 37px; border-radius: 50%; background: #168354; color: #fff; font-size: 21px; font-weight: 800; }
+      .result-status b { font-size: 16px; }
+      .result-status p { margin: 2px 0 0; color: #4d7464; font-size: 12px; }
+      .result-grid { display: grid; grid-template-columns: 1.25fr .75fr; gap: 20px; margin-top: 18px; }
+      .pdf-panel, .verification-details { overflow: hidden; border: 1px solid #dbe3e7; border-radius: 10px; background: #fff; box-shadow: 0 12px 30px #17324d0d; }
+      .pdf-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 13px 17px; border-bottom: 1px solid #e5ebee; color: #324a59; font-size: 12px; font-weight: 800; }
+      .pdf-toolbar small { padding: 3px 7px; border-radius: 4px; background: #fdeceb; color: #b13a35; font: 800 9px Arial, sans-serif; }
+      #pdfPreview { display: block; width: 100%; height: 520px; border: 0; background: #e8edef; }
+      .generated-pdf-preview { display: grid; min-height: 520px; place-items: center; padding: 32px; background: #e8edef; }
+      .generated-paper { position: relative; width: min(100%, 620px); min-height: 360px; padding: 42px 54px; overflow: hidden; border: 10px double #bd944d; background: linear-gradient(135deg, #fffefa, #f6f0e2); box-shadow: 0 12px 26px #263e491f; color: #1a3341; text-align: center; }
+      .generated-paper:before, .generated-paper:after { content: ""; position: absolute; width: 125px; height: 125px; border: 1px solid #caa96e; opacity: .5; }
+      .generated-paper:before { top: -88px; right: -88px; transform: rotate(45deg); }
+      .generated-paper:after { bottom: -88px; left: -88px; transform: rotate(45deg); }
+      .generated-brand { position: relative; z-index: 1; color: #17324d; font: 800 17px Arial, sans-serif; direction: ltr; }
+      .generated-brand b { color: #0d9cad; }.generated-brand span { font-weight: 400; }
+      .generated-paper > span { position: relative; z-index: 1; display: block; margin-top: 22px; color: #997542; font: 800 10px Arial, sans-serif; letter-spacing: 1.3px; }
+      .generated-paper h3 { position: relative; z-index: 1; margin: 10px 0 7px; color: #1a3341; font-size: 31px; }
+      .generated-paper p { position: relative; z-index: 1; margin: 4px 0; color: #687985; font-size: 14px; }
+      .generated-paper h2 { position: relative; z-index: 1; margin: 4px 0 8px; color: #1d596b; font: 700 32px Georgia, serif; direction: ltr; }
+      .generated-paper p b { color: #243e4b; }
+      .generated-paper > div { position: relative; z-index: 1; display: flex; justify-content: space-between; margin-top: 28px; padding-top: 12px; border-top: 1px solid #decda9; color: #806a45; font-size: 11px; }
+      .generated-paper em { font-family: Georgia, serif; }.generated-paper strong { direction: ltr; font: 800 11px Arial, sans-serif; }
+      .verification-details { padding: 29px; }
+      .verification-details h1 { margin: 7px 0 18px; color: #17324d; font-size: 23px; }
+      .verification-details h2 { margin: 0; color: #17324d; font-size: 28px; }
+      .verification-details .course { margin-top: 5px; }
+      .verification-details .cert-data { display: block; margin: 24px 0 16px; border: 0; }
+      .verification-details .cert-data div { padding: 11px 0; border: 0; border-bottom: 1px solid #e5ebee; text-align: right; }
+      .verification-details .cert-data b { margin-top: 3px; }
+      .formal-note { padding: 12px; border-radius: 6px; background: #f5f8f9; color: #526b7a; font-size: 11px; line-height: 1.9; }
+      .verification-details .download { width: 100%; margin-top: 7px; }
+      @media (max-width: 720px) { .wrap { width: min(100% - 28px, 540px); } .top { height: 76px; } .hero { padding: 34px 0 25px; } .hero h1 { font-size: 38px; } .assurances { gap: 9px 13px; font-size: 11px; } .mock { margin-top: 28px; } .card { border-radius: 7px; } .cert-top { height: auto; min-height: 130px; } .cert-body { padding: 34px 22px; } .dialog { border-radius: 16px 16px 0 0; } }
+      @media (max-width: 720px) {
+        #verify .showcase { display: block; min-height: 0; padding: 34px 0 145px; }
+        #verify .showcase:before { width: 590px; height: 590px; top: 310px; right: -110px; }
+        #verify .showcase:after { display: none; }
+        .hero-copy { padding-top: 0; }
+        .hero h1 { font-size: 44px; }
+        .visual-stage { min-height: 365px; margin-top: 30px; }
+        .trust-chip { top: 0; right: 0; padding: 9px 13px; font-size: 11px; }
+        .dash-window { top: 48px; width: 100%; min-height: 250px; grid-template-columns: 92px 1fr; border-radius: 9px; }
+        .dash-nav { padding: 13px 8px; font-size: 7px; }
+        .dash-logo { margin: 0 1px 11px; font-size: 8px; }
+        .dash-nav span { margin-top: 4px; padding: 6px 4px; }
+        .dash-main { padding: 15px 12px; }
+        .dash-main h2 { margin-bottom: 10px; font-size: 14px; }
+        .dash-stats { gap: 5px; }
+        .dash-stats > div { min-height: 57px; padding: 7px; }
+        .dash-stats small { font-size: 6px; }
+        .dash-stats b { margin-top: 5px; font-size: 13px; }
+        .dash-stats i { display: none; }
+        .dash-table { margin-top: 10px; padding: 8px; font-size: 6px; }
+        .dash-table > b { margin-bottom: 5px; font-size: 8px; }
+        .dash-table > div { padding: 5px 1px; }
+        .dash-table .dash-head { font-size: 5px; }
+        .verify-float { left: 8px; bottom: -70px; width: calc(100% - 16px); padding: 10px; grid-template-columns: 1fr .9fr; }
+        .verify-float > div:first-child { padding-right: 72px; }
+        .mini-qr { width: 52px; height: 52px; }
+        .live-verifier { margin-top: 0; }
+      }
+      @media (max-width: 720px) {
+        #verify .verify-hero { display: block; min-height: 0; padding: 30px 0 22px; }
+        #verify .verify-hero:before { width: 390px; height: 390px; right: -210px; top: 190px; }
+        #verify .verify-hero h1 { font-size: 40px; }
+        .verify-accent { min-height: 250px; margin-top: 22px; }
+        .certificate-preview { top: 12px; min-height: 226px; padding: 12px 25px 9px; }
+        .certificate-ribbon { margin-top: 6px; font-size: 7px; }
+        .certificate-preview h3 { margin: 4px 0 1px; font-size: 19px; }
+        .certificate-preview h4 { margin: 1px 0 2px; font-size: 18px; }
+        .certificate-preview p { font-size: 9px; }
+        .certificate-signatures { margin-top: 5px; }
+        .certificate-meta { margin-top: 3px; padding-top: 4px; }
+        #admin { min-height: 0; }
+        .admin-shell { display: block; min-height: 0; }
+        .admin-sidebar { padding: 16px; }
+        .side-brand { margin: 0 3px 13px; }
+        .admin-sidebar nav { display: flex; overflow-x: auto; gap: 5px; }
+        .admin-sidebar button { flex: 0 0 auto; padding: 8px 9px; font-size: 10px; }
+        .side-footer { display: none; }
+        .admin-content { padding: 27px 14px 42px; }
+        #admin .adminhead h1 { font-size: 24px; }
+        #admin .stats { grid-template-columns: 1fr 1fr; gap: 10px; }
+        #admin .stat { min-height: 95px; padding: 14px; }
+        #admin .stat b { font-size: 22px; }
+        #admin .box { overflow-x: auto; }
+        #admin .table { min-width: 560px; }
+      }
+      @media (max-width: 720px) {
+        #verify, #certificate { min-height: calc(100vh - 76px); }
+        .verify-page { width: min(100% - 28px, 580px); padding: 39px 0 45px; }
+        .verify-layout h1 { font-size: 35px; }
+        .verify-lead { font-size: 14px; }
+        .verify-search-card { margin-top: 23px; padding: 20px; border-radius: 16px; }
+        .verify-search-card .entry { display: block; }
+        .verify-search-card .entry input { min-height: 48px; }
+        .verify-search-card .primary { width: 100%; margin-top: 9px; min-height: 48px; }
+        .verify-actions { grid-template-columns: 1fr; }
+        .cert-page { width: min(100% - 28px, 580px); padding-top: 22px; }
+        .result-status { align-items: flex-start; padding: 15px; }
+        .result-status b { font-size: 14px; }
+        .result-grid { grid-template-columns: 1fr; gap: 14px; }
+        #pdfPreview { height: 390px; }
+        .generated-pdf-preview { min-height: 390px; padding: 16px; }
+        .generated-paper { min-height: 310px; padding: 30px 18px; }
+        .generated-paper h3 { font-size: 24px; }
+        .generated-paper h2 { font-size: 25px; }
+        .generated-paper p { font-size: 12px; }
+        .verification-details { padding: 22px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="top">
+        <div class="brand">
+          <svg viewBox="0 0 80 80">
+            <path
+              d="M24 4H43C63 4 76 19 76 40S63 76 43 76H24V52H46V28H24V4Z"
+              fill="currentColor"
+            />
+            <path d="M3 28H24V52H3Z" fill="#6366F1" /></svg
+          ><span>DevsHub <span class="academy">Academy</span><span>.cc</span></span>
+        </div>
+        <div class="switch">
+          <button class="role active" data-v="verify">المتحقق</button
+          ><button class="role" data-v="admin">الإدارة</button>
+        </div>
+      </header>
+      <main>
+        <section class="view active" id="verify">
+          <div class="verify-page">
+            <div class="verify-layout">
+              <span class="verify-eyebrow">⌾ التحقق من الشهادات</span>
+              <h1>تحقق من شهادة<br />DevsHub Academy</h1>
+              <p class="verify-lead">أدخل الرقم التسلسلي أو امسح رمز QR للوصول إلى سجل الشهادة الرسمي.</p>
+              <div class="verify-search-card">
+                <label for="serial">الرقم التسلسلي</label>
+                <div class="entry">
+                  <input id="serial" placeholder="أدخل السيريال المطبوع" /><button class="primary" id="verifyBtn">← تحقق</button>
+                </div>
+                <p>اكتب السيريال تماماً كما هو مطبوع على الشهادة. يمكنك أيضاً لصقه مباشرة.</p>
+                <div class="verify-or"><span>أو</span></div>
+                <div class="verify-actions">
+                  <button class="soft" id="cameraBtn">⌾ مسح رمز QR بالكاميرا</button>
+                  <label class="soft upload">▧ رفع صورة الرمز<input id="imageInput" type="file" accept="image/*" /></label>
+                </div>
+              </div>
+              <p class="verify-note">يتم طلب إذن الكاميرا فقط عند اختيار المسح. بيانات الشهادات المعروضة مخصصة للتحقق الرسمي.</p>
+              <div class="tip">رمز تجريبي للتحقق: <b>DVH-2026-78421</b></div>
+            </div>
+          </div>
+        </section>
+        <section class="view admin" id="admin">
+          <div class="admin-shell">
+            <aside class="admin-sidebar">
+              <div class="side-brand"><span>◆</span><b>DevsHub<br />Academy</b></div>
+              <nav>
+                <button class="side-active" data-admin-view="dashboard">▦ لوحة التحكم</button>
+                <button data-admin-view="certificates">▧ الشهادات</button>
+                <button data-admin-view="verify">⌾ التحقق</button>
+                <button data-admin-view="bulk">⇧ الإصدار الجماعي</button>
+                <button data-admin-view="templates">◫ القوالب</button>
+                <button data-admin-view="reports">◌ التقارير</button>
+              </nav>
+              <button class="side-footer" data-admin-view="settings">◌ الإعدادات</button>
+            </aside>
+            <div class="admin-content">
+              <div class="adminhead">
+                <div>
+                  <span class="kicker">ADMIN CONSOLE</span>
+                  <h1 id="adminHeading">لوحة إدارة الشهادات</h1>
+                  <p id="adminSubheading">أصدر واعرض وتحقق من جميع الشهادات من مكان واحد.</p>
+                </div>
+                <button class="primary add" id="addOpen">＋ إضافة شهادة</button>
+              </div>
+              <div class="stats">
+                <div class="stat"><span>إجمالي الشهادات</span><b id="total">1</b><i>▧</i></div>
+                <div class="stat"><span>شهادات موثّقة</span><b id="verified">1</b><i>✓</i></div>
+                <div class="stat"><span>تحققات اليوم</span><b>86</b><i>↗</i></div>
+                <div class="stat"><span>قيد المراجعة</span><b>04</b><i>◌</i></div>
+              </div>
+              <div class="box">
+                <div class="toolbar">
+                  <h3 id="certificateTableTitle">آخر الشهادات الصادرة</h3>
+                  <input class="search" id="search" placeholder="ابحث بالاسم أو السيريال" />
+                </div>
+                <table class="table">
+                  <thead><tr><th>المتدرب</th><th>الدورة</th><th>السيريال</th><th>الحالة</th><th></th></tr></thead>
+                  <tbody id="rows"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section class="view" id="certificate">
+          <div class="cert-page">
+            <button class="back" id="backBtn">← العودة للتحقق</button>
+            <div class="verification-result">
+              <div class="result-status"><span>✓</span><div><b>تم التحقق من الشهادة بنجاح</b><p>السجل مطابق لبيانات الإصدار المسجلة لدى DevsHub Academy.</p></div></div>
+              <div class="result-grid">
+                <div class="pdf-panel">
+                  <div class="pdf-toolbar"><span>معاينة ملف الشهادة</span><small>PDF</small></div>
+                  <iframe id="pdfPreview" title="معاينة الشهادة PDF"></iframe>
+                  <div class="generated-pdf-preview" id="generatedPdfPreview">
+                    <div class="generated-paper">
+                      <div class="generated-brand">DevsHub <b>Academy</b><span>.cc</span></div>
+                      <span>CERTIFICATE OF COMPLETION</span>
+                      <h3>شهادة إتمام مهني</h3>
+                      <p>تتشرف الأكاديمية بمنح هذه الشهادة إلى</p>
+                      <h2 id="previewName">Ahmed Ali</h2>
+                      <p>لإتمام برنامج <b id="previewCourse">Web Development Essentials</b></p>
+                      <div><em>DevsHub Academy</em><strong id="previewSerial">DVH-2026-78421</strong></div>
+                    </div>
+                  </div>
+                </div>
+                <aside class="verification-details">
+                  <span class="kicker">OFFICIAL RECORD</span>
+                  <h1>شهادة إتمام مهني</h1>
+                  <h2 id="certName">Ahmed Ali</h2>
+                  <p class="course" id="certCourse">Web Development Essentials</p>
+                  <div class="cert-data">
+                    <div>السيريال<b id="certSerial"></b></div>
+                    <div>تاريخ الإصدار<b id="certDate"></b></div>
+                    <div>الحالة<b style="color: #139b70">موثّقة</b></div>
+                  </div>
+                  <p class="formal-note">هذه الشهادة صالحة ومطابقة لسجل الإصدار الإلكتروني للأكاديمية.</p>
+                  <button class="primary download" id="downloadBtn">⇩ تنزيل الشهادة PDF</button>
+                </aside>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <div class="modal" id="addModal">
+      <div class="dialog">
+        <h2>إضافة شهادة جديدة</h2>
+        <p>ستُحفظ للتجربة على هذا المتصفح وتصبح صالحة للتحقق فوراً.</p>
+        <div class="field">
+          <label>اسم المتدرب</label
+          ><input id="newName" placeholder="مثال: Sara Hassan" />
+        </div>
+        <div class="field">
+          <label>اسم الدورة</label
+          ><input id="newCourse" placeholder="مثال: UI/UX Foundations" />
+        </div>
+        <div class="field">
+          <label>Prefix رمز الشهادة</label
+          ><input id="newPrefix" value="DVH" maxlength="6" placeholder="مثال: DVH" />
+        </div>
+        <div class="field">
+          <label>كود التحقق المقترح</label>
+          <code class="serial" id="serialSuggestion">DVH-2026-78002</code>
+        </div>
+        <div class="field">
+          <label>ملف الشهادة PDF (اختياري)</label
+          ><input id="newPdf" type="file" accept="application/pdf" />
+          <p class="field-help">يرتبط الملف بهذه الشهادة ويظهر كمعاينة بعد التحقق.</p>
+        </div>
+        <div class="dialog-actions">
+          <button class="primary" id="saveCert" style="min-height: 43px">
+            حفظ وإنشاء سيريال</button
+          ><button class="cancel" id="cancelAdd">إلغاء</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal" id="cameraModal">
+      <div class="dialog">
+        <div class="camera">
+          <video id="video" autoplay muted playsinline></video>
+          <div class="frame"></div>
+          <div class="line"></div>
+          <span id="cameraHint">جاري تشغيل الكاميرا…</span>
+        </div>
+        <h2>ضع الباركود ضمن الإطار</h2>
+        <button class="cancel" id="closeCamera">إلغاء</button>
+      </div>
+    </div>
+    <div class="modal" id="resultModal">
+      <div class="dialog result">
+        <div class="icon">!</div>
+        <h2>تعذر التحقق</h2>
+        <p>لم نجد سيريالاً مطابقاً. تأكد من الرقم ثم حاول مجدداً.</p>
+        <code class="serial" id="badSerial"></code
+        ><button class="cancel" id="closeResult">تم</button>
+      </div>
+    </div>
+    <div class="modal" id="adminToolModal">
+      <div class="dialog" id="adminToolDialog">
+        <h2 id="adminToolTitle"></h2>
+        <div id="adminToolBody"></div>
+        <div class="dialog-actions">
+          <button class="primary" id="adminToolPrimary" style="min-height: 43px"></button>
+          <button class="cancel" id="closeAdminTool">إغلاق</button>
+        </div>
+      </div>
+    </div>
+    <script>
+      const base = [
+        {
+          serial: "DVH-2026-78421",
+          name: "Ahmed Ali",
+          course: "Web Development Essentials",
+          date: "12 Sep 2026",
+        },
+      ];
+      let certs =
+          JSON.parse(localStorage.getItem("trustpass-certs") || "null") || base,
+        active;
+      const $ = (s) => document.querySelector(s);
+      document.body.dataset.view = "verify";
+      function cleanPrefix() {
+        return (
+          $("#newPrefix")?.value
+            .trim()
+            .toUpperCase()
+            .replace(/[^A-Z0-9]/g, "")
+            .slice(0, 6) || "DVH"
+        );
+      }
+      function proposedSerial() {
+        return cleanPrefix() + "-2026-" + String(78000 + certs.length + 1);
+      }
+      function refreshSerialSuggestion() {
+        $("#serialSuggestion").textContent = proposedSerial();
+      }
+      function save() {
+        localStorage.setItem("trustpass-certs", JSON.stringify(certs));
+      }
+      function render() {
+        let q = $("#search").value?.toLowerCase() || "";
+        $("#rows").innerHTML = certs
+          .filter((c) =>
+            (c.name + c.serial + c.course).toLowerCase().includes(q),
+          )
+          .map(
+            (c) =>
+              `<tr><td><b>${c.name}</b></td><td>${c.course}</td><td dir="ltr">${c.serial}</td><td><span class="badge">موثّقة</span></td><td><button class="link" data-s="${c.serial}">عرض</button></td></tr>`,
+          )
+          .join("");
+        $("#total").textContent = certs.length;
+        $("#verified").textContent = certs.length;
+        document
+          .querySelectorAll("[data-s]")
+          .forEach((b) => (b.onclick = () => showCert(find(b.dataset.s))));
+      }
+      function find(s) {
+        return certs.find((c) => c.serial === s.trim().toUpperCase());
+      }
+      function show(v) {
+        document
+          .querySelectorAll(".view,.role")
+          .forEach((x) => x.classList.remove("active"));
+        $("#" + v).classList.add("active");
+        document.querySelector(`[data-v="${v}"]`)?.classList.add("active");
+        document.body.dataset.view = v;
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      function buildCertificatePdf(c) {
+        const { jsPDF } = window.jspdf;
+        let d = new jsPDF({ orientation: "landscape" });
+        d.setFillColor(15, 31, 58);
+        d.rect(0, 0, 297, 38, "F");
+        d.setTextColor(255);
+        d.setFontSize(24);
+        d.text("DevsHub Academy.cc - Certificate of Completion", 148, 24, { align: "center" });
+        d.setTextColor(30, 45, 70);
+        d.setFontSize(18);
+        d.text("This certifies that", 148, 65, { align: "center" });
+        d.setFontSize(30);
+        d.text(c.name, 148, 88, { align: "center" });
+        d.setFontSize(17);
+        d.text("has successfully completed", 148, 108, { align: "center" });
+        d.setFontSize(22);
+        d.text(c.course, 148, 126, { align: "center" });
+        d.setFontSize(12);
+        d.text("Certificate serial: " + c.serial, 148, 157, { align: "center" });
+        d.text("Issued: " + c.date + " | Verified by DevsHub Academy.cc", 148, 168, { align: "center" });
+        return d;
+      }
+      function loadPdfPreview(c) {
+        $("#previewName").textContent = c.name;
+        $("#previewCourse").textContent = c.course;
+        $("#previewSerial").textContent = c.serial;
+        if (c.pdf) {
+          $("#generatedPdfPreview").style.display = "none";
+          $("#pdfPreview").style.display = "block";
+          $("#pdfPreview").src = c.pdf;
+          return;
+        }
+        $("#pdfPreview").style.display = "none";
+        $("#generatedPdfPreview").style.display = "grid";
+      }
+      function showCert(c) {
+        if (!c) {
+          $("#badSerial").textContent = $("#serial").value || "لا يوجد سيريال";
+          $("#resultModal").classList.add("show");
+          return;
+        }
+        active = c;
+        $("#certName").textContent = c.name;
+        $("#certCourse").textContent = c.course;
+        $("#certSerial").textContent = c.serial;
+        $("#certDate").textContent = c.date;
+        loadPdfPreview(c);
+        location.hash = "certificate/" + c.serial;
+        show("certificate");
+      }
+      $('.role[data-v="verify"]').onclick = () => {
+        location.hash = "";
+        show("verify");
+      };
+      $('.role[data-v="admin"]').onclick = () => {
+        location.hash = "admin";
+        show("admin");
+      };
+      $("#verifyBtn").onclick = () => showCert(find($("#serial").value));
+      $("#serial").onkeydown = (e) =>
+        e.key === "Enter" && showCert(find(e.target.value));
+      $("#backBtn").onclick = () => {
+        location.hash = "";
+        show("verify");
+      };
+      $("#search").oninput = render;
+      $("#addOpen").onclick = () => {
+        refreshSerialSuggestion();
+        $("#addModal").classList.add("show");
+      };
+      $("#cancelAdd").onclick = () => $("#addModal").classList.remove("show");
+      $("#newPrefix").oninput = refreshSerialSuggestion;
+      function closeAdminTool() {
+        $("#adminToolModal").classList.remove("show");
+      }
+      function openAdminTool(title, body, actionLabel, action) {
+        $("#adminToolTitle").textContent = title;
+        $("#adminToolBody").innerHTML = body;
+        $("#adminToolPrimary").textContent = actionLabel;
+        $("#adminToolPrimary").onclick = () => {
+          action?.();
+          closeAdminTool();
+        };
+        $("#adminToolModal").classList.add("show");
+      }
+      function setAdminView(view) {
+        document.querySelectorAll("[data-admin-view]").forEach((b) =>
+          b.classList.toggle("side-active", b.dataset.adminView === view),
+        );
+        if (view === "verify") {
+          location.hash = "";
+          show("verify");
+          return;
+        }
+        if (view === "dashboard" || view === "certificates") {
+          $("#adminHeading").textContent =
+            view === "dashboard" ? "لوحة إدارة الشهادات" : "الشهادات الصادرة";
+          $("#adminSubheading").textContent =
+            view === "dashboard"
+              ? "أصدر واعرض وتحقق من جميع الشهادات من مكان واحد."
+              : "ابحث في سجلات الشهادات واعرض صفحة كل متدرب.";
+          $("#certificateTableTitle").textContent =
+            view === "dashboard" ? "آخر الشهادات الصادرة" : "كل الشهادات";
+          return;
+        }
+        const tools = {
+          bulk: [
+            "الإصدار الجماعي",
+            '<p>ارفع ملف CSV يحتوي اسم المتدرب واسم الدورة لإصدار عدة شهادات دفعة واحدة.</p><label class="soft upload" style="margin-top:14px">▧ اختيار ملف CSV<input type="file" accept=".csv" /></label>',
+            "متابعة",
+          ],
+          templates: [
+            "قوالب الشهادات",
+            '<p>القالب النشط: <b>الشهادة المهنية الرسمية</b></p><div class="tip">يمكنك تخصيص الشعار والألوان والحقول عند ربط النظام بالخدمة الخلفية.</div>',
+            "تحديد القالب",
+          ],
+          reports: [
+            "تقرير الأداء",
+            '<p>هذا الشهر: <b>' + certs.length + '</b> شهادة صادرة و <b>86</b> عملية تحقق ناجحة اليوم.</p><div class="tip">ستظهر التقارير التفصيلية هنا عند ربط بيانات المؤسسة.</div>',
+            "تحديث التقرير",
+          ],
+          settings: [
+            "إعدادات المؤسسة",
+            '<p>هوية المنصة الحالية: <b>DevsHub Academy.cc</b></p><div class="tip">تخصيص الهوية، دومين التحقق، وشعار المؤسسة متاح في النسخة الكاملة.</div>',
+            "حفظ الإعدادات",
+          ],
+        };
+        const tool = tools[view];
+        if (tool) openAdminTool(tool[0], tool[1], tool[2]);
+      }
+      document.querySelectorAll("[data-admin-view]").forEach((button) => {
+        button.onclick = () => setAdminView(button.dataset.adminView);
+      });
+      $("#closeAdminTool").onclick = closeAdminTool;
+      $("#saveCert").onclick = async () => {
+        let n = $("#newName").value.trim(),
+          c = $("#newCourse").value.trim();
+        if (!n || !c) {
+          alert("اكتب اسم المتدرب والدورة");
+          return;
+        }
+        let serial = proposedSerial();
+        let pdf;
+        const pdfFile = $("#newPdf").files[0];
+        if (pdfFile) {
+          if (pdfFile.size > 2500000) {
+            alert("يرجى اختيار ملف PDF أصغر من 2.5MB للتجربة");
+            return;
+          }
+          pdf = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(pdfFile);
+          });
+        }
+        let x = {
+          serial,
+          name: n,
+          course: c,
+          date: new Date().toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }),
+          pdf,
+        };
+        certs.unshift(x);
+        save();
+        render();
+        $("#addModal").classList.remove("show");
+        $("#newName").value = "";
+        $("#newCourse").value = "";
+        $("#newPdf").value = "";
+        refreshSerialSuggestion();
+        alert("تم إنشاء الشهادة. كود التحقق: " + serial);
+      };
+      $("#closeResult").onclick = () =>
+        $("#resultModal").classList.remove("show");
+      async function cam() {
+        try {
+          let s = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: "environment" } },
+          });
+          window.cam = s;
+          $("#video").srcObject = s;
+          $("#cameraHint").style.display = "none";
+          $("#cameraModal").classList.add("show");
+        } catch (e) {
+          alert("تعذر فتح الكاميرا");
+        }
+      }
+      $("#cameraBtn").onclick = cam;
+      $("#closeCamera").onclick = () => {
+        window.cam?.getTracks().forEach((t) => t.stop());
+        $("#cameraModal").classList.remove("show");
+      };
+      $("#imageInput").onchange = () => showCert(null);
+      $("#downloadBtn").onclick = () => {
+        if (active.pdf) {
+          const a = document.createElement("a");
+          a.href = active.pdf;
+          a.download = "DevsHub-" + active.serial + ".pdf";
+          a.click();
+          return;
+        }
+        buildCertificatePdf(active).save("DevsHub-" + active.serial + ".pdf");
+      };
+      render();
+      let hash = location.hash.split("/");
+      if (hash[0] === "#certificate" && find(hash[1])) showCert(find(hash[1]));
+      else if (location.hash === "#admin") show("admin");
+    </script>
+  </body>
+</html>
