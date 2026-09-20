@@ -1917,6 +1917,1004 @@
       }
     </style>
 
+  
+    <style>
+      /* PREMIUM CREDENTIAL UX v3 */
+      body[data-view="verify"] {
+        background: #061b28 !important;
+      }
+
+      #verify {
+        position: relative !important;
+        right: 50% !important;
+        width: 100vw !important;
+        margin-right: -50vw !important;
+        min-height: calc(100vh - 88px) !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        background: #f6f9fb !important;
+        color: #17324d !important;
+      }
+
+      .credential-home {
+        background: #f6f9fb;
+      }
+
+      .credential-hero {
+        position: relative;
+        display: grid;
+        grid-template-columns: minmax(0, 1.05fr) minmax(360px, .95fr);
+        gap: 58px;
+        align-items: center;
+        width: min(1180px, calc(100% - 48px));
+        min-height: 690px;
+        margin: 0 auto;
+        padding: 76px 0 86px;
+      }
+
+      .credential-hero::before {
+        content: "";
+        position: absolute;
+        z-index: 0;
+        width: 720px;
+        height: 720px;
+        left: 48%;
+        top: -235px;
+        border-radius: 50%;
+        background: radial-gradient(circle, #0e728012 0, #0e728007 48%, transparent 70%);
+        pointer-events: none;
+      }
+
+      .credential-hero-copy,
+      .credential-visual {
+        position: relative;
+        z-index: 1;
+      }
+
+      .issuer-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 11px;
+        margin-bottom: 25px;
+        padding: 10px 13px;
+        border: 1px solid #d5e4e8;
+        border-radius: 8px;
+        background: #ffffff;
+        box-shadow: 0 8px 22px #17324d0a;
+      }
+
+      .issuer-mark {
+        display: grid;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 7px;
+        background: #082b3a;
+        color: #1dc6d5;
+        font-size: 17px;
+      }
+
+      .issuer-pill div {
+        display: grid;
+        gap: 2px;
+      }
+
+      .issuer-pill small {
+        color: #7a8d99;
+        font: 700 8px Arial, sans-serif;
+        letter-spacing: 1px;
+      }
+
+      .issuer-pill b {
+        color: #143142;
+        font-size: 12px;
+      }
+
+      .credential-eyebrow {
+        display: block;
+        margin-bottom: 10px;
+        color: #0e7280;
+        font: 800 10px Arial, sans-serif;
+        letter-spacing: 1.3px;
+      }
+
+      .credential-hero h1 {
+        max-width: 650px;
+        margin: 0;
+        color: #102b3b;
+        font-size: clamp(42px, 5vw, 65px);
+        line-height: 1.2;
+        letter-spacing: -1.9px;
+      }
+
+      .credential-hero h1 em {
+        color: #0e7280;
+        font-style: normal;
+      }
+
+      .credential-lead {
+        max-width: 590px;
+        margin: 20px 0 0;
+        color: #657b89;
+        font-size: 16px;
+        line-height: 2;
+      }
+
+      .hero-trusts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 18px;
+        margin-top: 20px;
+        color: #486473;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .hero-trusts span::first-letter {
+        color: #16835d;
+      }
+
+      .premium-search {
+        margin-top: 32px !important;
+        padding: 0 !important;
+        overflow: hidden;
+        border: 1px solid #d8e3e8 !important;
+        border-radius: 11px !important;
+        background: #ffffff !important;
+        box-shadow: 0 22px 50px #17324d12 !important;
+      }
+
+      .search-card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 18px 20px;
+        border-bottom: 1px solid #e7eef1;
+        background: #fbfdfe;
+      }
+
+      .search-card-head > div {
+        display: grid;
+        gap: 3px;
+      }
+
+      .search-card-head span {
+        color: #17324d;
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .search-card-head small {
+        color: #7e8e98;
+        font-size: 10px;
+      }
+
+      .search-card-head > i {
+        display: grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        background: #e8f5f6;
+        color: #0e7280;
+        font: 800 9px Arial, sans-serif;
+      }
+
+      .premium-search > label {
+        display: block;
+        margin: 19px 20px 8px !important;
+        color: #405867 !important;
+        font-size: 11px !important;
+        font-weight: 800 !important;
+      }
+
+      .credential-entry {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) 128px;
+        gap: 9px !important;
+        padding: 0 20px;
+      }
+
+      #verify #serial {
+        display: block !important;
+        width: 100% !important;
+        height: 52px !important;
+        min-height: 52px !important;
+        max-height: 52px !important;
+        padding: 13px 14px !important;
+        resize: none !important;
+        overflow: hidden !important;
+        border: 1px solid #ccdbe1 !important;
+        border-radius: 6px !important;
+        outline: none !important;
+        background: #ffffff !important;
+        color: #17324d !important;
+        caret-color: #17324d !important;
+        font: 13px/24px monospace !important;
+        direction: ltr !important;
+        text-align: left !important;
+        pointer-events: auto !important;
+        user-select: text !important;
+        -webkit-user-select: text !important;
+        cursor: text !important;
+      }
+
+      #verify #serial:focus {
+        border-color: #0e7280 !important;
+        box-shadow: 0 0 0 3px #0e728014 !important;
+      }
+
+      .verify-main-btn {
+        min-height: 52px !important;
+        border-radius: 6px !important;
+        background: #082b3a !important;
+        box-shadow: none !important;
+      }
+
+      .verify-main-btn:hover {
+        background: #0e5362 !important;
+      }
+
+      .credential-secondary-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 9px;
+        padding: 12px 20px 0;
+      }
+
+      .credential-secondary-actions .soft {
+        display: grid;
+        place-items: center;
+        min-height: 43px !important;
+        border: 1px solid #d7e2e7 !important;
+        border-radius: 6px !important;
+        background: #f7fafb !important;
+        color: #355b69 !important;
+        font-size: 10px !important;
+        font-weight: 700;
+      }
+
+      .credential-secondary-actions .soft:hover {
+        background: #eef6f7 !important;
+        border-color: #abcbd2 !important;
+      }
+
+      .search-card-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 17px;
+        padding: 13px 20px 16px;
+        border-top: 1px solid #e8eef1;
+        color: #83929b;
+        font-size: 9px;
+      }
+
+      .demo-serial {
+        border: 0;
+        background: transparent;
+        color: #0e7280;
+        font: 800 10px Cairo, sans-serif;
+        cursor: pointer;
+      }
+
+      .credential-visual {
+        min-height: 530px;
+        padding: 30px;
+        overflow: hidden;
+        border: 1px solid #164454;
+        border-radius: 14px;
+        background:
+          radial-gradient(circle at 80% 15%, #1dc6d518, transparent 34%),
+          linear-gradient(155deg, #082b3a, #041923);
+        box-shadow: 0 28px 70px #061b2838;
+      }
+
+      .live-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        color: #80e0e7;
+        font: 800 8px Arial, sans-serif;
+        letter-spacing: 1.2px;
+      }
+
+      .live-label i,
+      .log-live {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #1dc6d5;
+        box-shadow: 0 0 0 0 #1dc6d55c;
+        animation: credentialPulse 1.8s ease-out infinite;
+      }
+
+      .credential-preview {
+        position: relative;
+        margin-top: 22px;
+        padding: 15px;
+        overflow: hidden;
+        border: 1px solid #ffffff1f;
+        border-radius: 9px;
+        background: #ffffff08;
+      }
+
+      .credential-preview-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 0 2px 13px;
+      }
+
+      .preview-brand {
+        color: #ffffff;
+        font: 800 12px Arial, sans-serif;
+      }
+
+      .preview-brand b {
+        color: #1dc6d5;
+      }
+
+      .preview-brand small {
+        color: #ffffffa6;
+        font-size: 8px;
+      }
+
+      .preview-status {
+        padding: 5px 8px;
+        border: 1px solid #41b98c66;
+        border-radius: 4px;
+        background: #1b8f641d;
+        color: #6fe0b4;
+        font: 800 7px Arial, sans-serif;
+        letter-spacing: 1px;
+      }
+
+      .preview-certificate {
+        min-height: 290px;
+        padding: 34px 28px 26px;
+        border: 8px double #b79657;
+        background:
+          linear-gradient(135deg, #fffdf7, #f3ecde);
+        color: #183342;
+        text-align: center;
+        box-shadow: 0 18px 40px #0000003b;
+      }
+
+      .preview-certificate > small {
+        color: #9a7440;
+        font: 800 7px Arial, sans-serif;
+        letter-spacing: 1.3px;
+      }
+
+      .preview-certificate h3 {
+        margin: 22px 0 18px;
+        font: 700 28px Georgia, serif;
+      }
+
+      .preview-certificate p {
+        margin: 0 0 3px;
+        color: #7f8c92;
+        font-size: 9px;
+      }
+
+      .preview-certificate > strong {
+        display: block;
+        color: #17324d;
+        font-size: 23px;
+      }
+
+      .preview-course {
+        margin-top: 12px;
+        color: #405c68;
+        font-size: 10px;
+      }
+
+      .preview-meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        margin-top: 29px;
+        padding-top: 12px;
+        border-top: 1px solid #d9ccb4;
+        color: #806b48;
+        font: 700 8px Arial, sans-serif;
+      }
+
+      .premium-beam {
+        left: 13px !important;
+        right: 13px !important;
+        top: 72px !important;
+        animation: premiumScan 3.1s ease-in-out infinite !important;
+      }
+
+      .verification-log {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 7px;
+        margin-top: 13px;
+      }
+
+      .verification-log > div {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        padding: 10px;
+        border: 1px solid #ffffff12;
+        border-radius: 6px;
+        background: #ffffff08;
+      }
+
+      .verification-log i {
+        flex: 0 0 auto;
+      }
+
+      .log-ok {
+        display: grid;
+        place-items: center;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #1b8f6426;
+        color: #65d6ab;
+        font-style: normal;
+        font-size: 10px;
+      }
+
+      .verification-log span {
+        display: grid;
+        gap: 2px;
+        min-width: 0;
+      }
+
+      .verification-log b {
+        overflow: hidden;
+        color: #dbe9ee;
+        font: 700 7px Arial, sans-serif;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+
+      .verification-log small {
+        color: #6e96a4;
+        font: 700 6px Arial, sans-serif;
+      }
+
+      .credential-trust-band {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        width: min(1180px, calc(100% - 48px));
+        margin: 0 auto;
+        overflow: hidden;
+        border: 1px solid #dce6ea;
+        border-radius: 10px;
+        background: #ffffff;
+        box-shadow: 0 12px 30px #17324d0a;
+      }
+
+      .credential-trust-band > div {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 20px 23px;
+        border-left: 1px solid #e5ecef;
+      }
+
+      .credential-trust-band > div:last-child {
+        border-left: 0;
+      }
+
+      .credential-trust-band > div > b {
+        color: #0e7280;
+        font: 800 11px Arial, sans-serif;
+      }
+
+      .credential-trust-band span {
+        display: grid;
+        gap: 3px;
+      }
+
+      .credential-trust-band strong {
+        color: #1b3443;
+        font-size: 11px;
+      }
+
+      .credential-trust-band small {
+        color: #81909a;
+        font-size: 9px;
+      }
+
+      .credential-how {
+        width: min(1100px, calc(100% - 48px));
+        margin: 0 auto;
+        padding: 92px 0 85px;
+      }
+
+      .section-heading {
+        max-width: 620px;
+        margin: 0 auto 38px;
+        text-align: center;
+      }
+
+      .section-heading > span {
+        color: #0e7280;
+        font: 800 9px Arial, sans-serif;
+        letter-spacing: 1.3px;
+      }
+
+      .section-heading h2,
+      .credential-confidence h2 {
+        margin: 10px 0 9px;
+        color: #17324d;
+        font-size: 30px;
+        line-height: 1.4;
+      }
+
+      .section-heading p,
+      .credential-confidence > div:first-child > p {
+        margin: 0;
+        color: #748692;
+        font-size: 13px;
+        line-height: 1.9;
+      }
+
+      .how-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+      }
+
+      .how-grid article {
+        position: relative;
+        min-height: 205px;
+        padding: 25px;
+        border: 1px solid #dce6ea;
+        border-radius: 9px;
+        background: #ffffff;
+        box-shadow: 0 10px 26px #17324d08;
+      }
+
+      .how-grid article > b {
+        position: absolute;
+        left: 19px;
+        top: 18px;
+        color: #a7b7bf;
+        font: 800 9px Arial, sans-serif;
+      }
+
+      .how-grid article > i {
+        display: grid;
+        place-items: center;
+        width: 39px;
+        height: 39px;
+        border-radius: 7px;
+        background: #eaf5f6;
+        color: #0e7280;
+        font-style: normal;
+        font-size: 17px;
+      }
+
+      .how-grid h3 {
+        margin: 22px 0 7px;
+        color: #1a3443;
+        font-size: 15px;
+      }
+
+      .how-grid p {
+        margin: 0;
+        color: #778894;
+        font-size: 11px;
+        line-height: 1.8;
+      }
+
+      .credential-confidence {
+        display: grid;
+        grid-template-columns: 1fr .85fr;
+        gap: 55px;
+        align-items: center;
+        width: min(1100px, calc(100% - 48px));
+        margin: 0 auto;
+        padding: 55px;
+        border-radius: 13px;
+        background: linear-gradient(145deg, #082b3a, #041a27);
+        box-shadow: 0 24px 55px #061b2829;
+      }
+
+      .credential-confidence .credential-eyebrow {
+        color: #48cbd5;
+      }
+
+      .credential-confidence h2 {
+        color: #f3f8fa;
+      }
+
+      .credential-confidence > div:first-child > p {
+        color: #a9c0ca;
+      }
+
+      .confidence-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .confidence-list span {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 13px 14px;
+        border: 1px solid #ffffff12;
+        border-radius: 7px;
+        background: #ffffff08;
+        color: #d6e5ea;
+        font-size: 11px;
+      }
+
+      .confidence-list i {
+        display: grid;
+        place-items: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: #1f9e7325;
+        color: #6ad7ae;
+        font-style: normal;
+      }
+
+      .credential-home::after {
+        content: "";
+        display: block;
+        height: 85px;
+      }
+
+      .credential-result-page {
+        width: min(1120px, calc(100% - 44px));
+        margin: 0 auto;
+        padding: 34px 0 70px;
+      }
+
+      .result-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 18px;
+      }
+
+      .result-issuer {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #17324d;
+        font-size: 11px;
+      }
+
+      .result-issuer span {
+        color: #0e7280;
+      }
+
+      .verified-banner {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 16px;
+        align-items: center;
+        padding: 20px 22px;
+        border: 1px solid #bfe0d2;
+        border-radius: 9px;
+        background: #f1faf6;
+      }
+
+      .verified-icon {
+        display: grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #16815d;
+        color: white;
+        font-size: 21px;
+        font-weight: 800;
+      }
+
+      .verified-banner small {
+        color: #5a8a76;
+        font: 800 8px Arial, sans-serif;
+        letter-spacing: 1px;
+      }
+
+      .verified-banner h1 {
+        margin: 3px 0 2px;
+        color: #174d3a;
+        font-size: 18px;
+      }
+
+      .verified-banner p {
+        margin: 0;
+        color: #5e786d;
+        font-size: 10px;
+      }
+
+      .valid-pill {
+        padding: 7px 9px;
+        border: 1px solid #a9d4c1;
+        border-radius: 5px;
+        background: #ffffff;
+        color: #167253;
+        font: 800 8px Arial, sans-serif;
+        letter-spacing: .7px;
+      }
+
+      .credential-result-grid {
+        display: grid;
+        grid-template-columns: 1.15fr .85fr;
+        gap: 18px;
+        margin-top: 18px;
+      }
+
+      .premium-pdf-panel,
+      .premium-details {
+        border: 1px solid #dce5e9 !important;
+        border-radius: 9px !important;
+        background: #ffffff !important;
+        box-shadow: 0 12px 30px #17324d0b !important;
+      }
+
+      .premium-details {
+        padding: 28px !important;
+      }
+
+      .record-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #0e7280;
+        font: 800 8px Arial, sans-serif;
+        letter-spacing: 1px;
+      }
+
+      .record-label i {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #16815d;
+      }
+
+      .record-type {
+        display: block;
+        margin-top: 23px;
+        color: #85939c;
+        font-size: 10px;
+      }
+
+      .premium-details > h2 {
+        margin: 4px 0 5px !important;
+        color: #17324d !important;
+        font-size: 30px !important;
+      }
+
+      .premium-details .course {
+        margin: 0 0 22px !important;
+        color: #5f7481 !important;
+        font-size: 13px !important;
+      }
+
+      .credential-record-list {
+        border-top: 1px solid #e4ebee;
+      }
+
+      .credential-record-list > div {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 13px 0;
+        border-bottom: 1px solid #e9eef1;
+      }
+
+      .credential-record-list span {
+        color: #7b8b95;
+        font-size: 10px;
+      }
+
+      .credential-record-list b {
+        color: #2a4352;
+        font-size: 10px;
+        text-align: left;
+      }
+
+      .record-valid {
+        color: #16815d !important;
+      }
+
+      .record-note {
+        display: flex;
+        gap: 10px;
+        margin: 18px 0;
+        padding: 13px;
+        border: 1px solid #d7e8e0;
+        border-radius: 6px;
+        background: #f5faf7;
+      }
+
+      .record-note > i {
+        color: #16815d;
+        font-style: normal;
+        font-weight: 800;
+      }
+
+      .record-note p {
+        display: grid;
+        gap: 3px;
+        margin: 0;
+      }
+
+      .record-note b {
+        color: #315749;
+        font-size: 10px;
+      }
+
+      .record-note span {
+        color: #71877d;
+        font-size: 9px;
+        line-height: 1.6;
+      }
+
+      .premium-details .download {
+        width: 100%;
+        min-height: 48px !important;
+        border-radius: 6px !important;
+        background: #082b3a !important;
+      }
+
+      @keyframes credentialPulse {
+        0% { box-shadow: 0 0 0 0 #1dc6d55c; }
+        70% { box-shadow: 0 0 0 8px #1dc6d500; }
+        100% { box-shadow: 0 0 0 0 #1dc6d500; }
+      }
+
+      @keyframes premiumScan {
+        0%, 100% { top: 72px; opacity: .6; }
+        50% { top: 335px; opacity: 1; }
+      }
+
+      @media (max-width: 920px) {
+        .credential-hero {
+          grid-template-columns: 1fr;
+          gap: 38px;
+          padding-top: 52px;
+        }
+
+        .credential-visual {
+          max-width: 620px;
+          width: 100%;
+          margin: 0 auto;
+        }
+
+        .credential-confidence {
+          grid-template-columns: 1fr;
+          gap: 30px;
+        }
+
+        .credential-result-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .credential-hero {
+          width: min(100% - 28px, 580px);
+          padding: 38px 0 48px;
+        }
+
+        .issuer-pill {
+          margin-bottom: 18px;
+        }
+
+        .credential-hero h1 {
+          font-size: 39px;
+        }
+
+        .credential-lead {
+          font-size: 14px;
+        }
+
+        .credential-entry {
+          grid-template-columns: 1fr;
+        }
+
+        #verify #serial {
+          height: 54px !important;
+          min-height: 54px !important;
+          max-height: 54px !important;
+          font-size: 16px !important;
+        }
+
+        .verify-main-btn {
+          width: 100%;
+        }
+
+        .credential-secondary-actions {
+          grid-template-columns: 1fr;
+        }
+
+        .search-card-foot {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .credential-visual {
+          display: none;
+        }
+
+        .credential-trust-band {
+          grid-template-columns: 1fr;
+          width: min(100% - 28px, 580px);
+        }
+
+        .credential-trust-band > div {
+          border-left: 0;
+          border-bottom: 1px solid #e5ecef;
+        }
+
+        .credential-trust-band > div:last-child {
+          border-bottom: 0;
+        }
+
+        .credential-how {
+          width: min(100% - 28px, 580px);
+          padding: 65px 0 58px;
+        }
+
+        .how-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .credential-confidence {
+          width: min(100% - 28px, 580px);
+          padding: 28px 22px;
+        }
+
+        .section-heading h2,
+        .credential-confidence h2 {
+          font-size: 25px;
+        }
+
+        .credential-result-page {
+          width: min(100% - 28px, 580px);
+          padding-top: 22px;
+        }
+
+        .result-topbar {
+          align-items: flex-start;
+          flex-direction: column-reverse;
+        }
+
+        .verified-banner {
+          grid-template-columns: auto 1fr;
+        }
+
+        .valid-pill {
+          grid-column: 1 / -1;
+          width: max-content;
+        }
+
+        .premium-details {
+          padding: 22px !important;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .live-label i,
+        .log-live,
+        .premium-beam {
+          animation: none !important;
+        }
+      }
+    </style>
+
   </head>
   <body>
     <div class="wrap">
@@ -1937,79 +2935,122 @@
       </header>
       <main>
         <section class="view active" id="verify">
-          <div class="verify-page">
-            <div class="verify-shell">
-              <aside class="verify-sidebar">
-                <div class="verify-side-brand"><span>◆</span><b>DevsHub<br />Academy</b></div>
-                <div class="verify-side-title">التحقق من الشهادات</div>
-                <p>بوابة التحقق الرسمية من شهادات الأكاديمية.</p>
-                <div class="verify-side-step active"><b>01</b><span>أدخل السيريال</span></div>
-                <div class="verify-side-step"><b>02</b><span>تحقق من السجل</span></div>
-                <div class="verify-side-step"><b>03</b><span>اعرض الشهادة</span></div>
-              </aside>
-              <div class="verify-content">
-                <div class="verify-workspace">
-                  <div class="verify-layout">
-                    <span class="verify-eyebrow">⌾ التحقق من الشهادات</span>
-                    <h1>تحقق من شهادة<br />DevsHub Academy</h1>
-                    <p class="verify-lead">أدخل الرقم التسلسلي أو امسح رمز QR للوصول إلى سجل الشهادة الرسمي.</p>
-                    <div class="verify-search-card">
-                      <label for="serial">الرقم التسلسلي</label>
-                      <div class="entry">
-                        <textarea
-                          id="serial"
-                          rows="1"
-                          placeholder="أدخل السيريال المطبوع"
-                          autocomplete="off"
-                          autocorrect="off"
-                          spellcheck="false"
-                          aria-label="الرقم التسلسلي"
-                        ></textarea>
-                        <button class="primary" id="verifyBtn">← تحقق</button>
-                      </div>
-                      <p>اكتب السيريال تماماً كما هو مطبوع على الشهادة. يمكنك أيضاً لصقه مباشرة.</p>
-                      <div class="verify-or"><span>أو</span></div>
-                      <div class="verify-actions">
-                        <button class="soft" id="cameraBtn">⌾ مسح رمز QR بالكاميرا</button>
-                        <label class="soft upload">▧ رفع صورة الرمز<input id="imageInput" type="file" accept="image/*" /></label>
-                      </div>
+          <div class="credential-home">
+            <section class="credential-hero">
+              <div class="credential-hero-copy">
+                <div class="issuer-pill">
+                  <span class="issuer-mark">◆</span>
+                  <div>
+                    <small>OFFICIAL CREDENTIAL VERIFICATION</small>
+                    <b>DevsHub Academy.cc</b>
+                  </div>
+                </div>
+
+                <span class="credential-eyebrow">بوابة التحقق الرسمية</span>
+                <h1>تحقق من صحة الشهادة <em>خلال ثوانٍ.</em></h1>
+                <p class="credential-lead">تحقق مباشرة من سجل DevsHub Academy باستخدام الرقم التسلسلي المطبوع على الشهادة أو رمز QR.</p>
+
+                <div class="hero-trusts">
+                  <span>✓ سجل إصدار رسمي</span>
+                  <span>✓ تحقق فوري</span>
+                  <span>✓ متوافق مع الهاتف</span>
+                </div>
+
+                <div class="verify-search-card premium-search">
+                  <div class="search-card-head">
+                    <div>
+                      <span>التحقق من الشهادة</span>
+                      <small>أدخل الرقم التسلسلي كما يظهر على الشهادة</small>
                     </div>
-                    <p class="verify-note">يتم طلب إذن الكاميرا فقط عند اختيار المسح. بيانات الشهادات المعروضة مخصصة للتحقق الرسمي.</p>
-                    <div class="tip">رمز تجريبي للتحقق: <b>DVH-2026-78421</b></div>
+                    <i>01</i>
                   </div>
 
-                  <div class="scan-demo" aria-hidden="true">
-                    <div class="scan-demo-head">
-                      <span class="scan-status"><i></i> SCANNING</span>
-                      <small>LIVE CHECK</small>
-                    </div>
-                    <div class="scan-stage">
-                      <div class="scan-corners corner-a"></div>
-                      <div class="scan-corners corner-b"></div>
-                      <div class="scan-corners corner-c"></div>
-                      <div class="scan-corners corner-d"></div>
-                      <div class="scan-certificate">
-                        <div class="scan-cert-brand">DevsHub <b>Academy</b></div>
-                        <span>CERTIFICATE OF COMPLETION</span>
-                        <h3>Certificate</h3>
-                        <div class="scan-cert-line wide"></div>
-                        <div class="scan-cert-line"></div>
-                        <div class="scan-cert-meta">
-                          <i></i><i></i><i></i>
-                        </div>
-                      </div>
-                      <div class="scan-beam"></div>
-                      <div class="scan-glow"></div>
-                    </div>
-                    <div class="scan-demo-foot">
-                      <span><i class="ok-dot"></i> السجل الرقمي</span>
-                      <span><i class="ok-dot"></i> رقم الشهادة</span>
-                      <span><i class="pending-dot"></i> المطابقة</span>
-                    </div>
+                  <label for="serial">الرقم التسلسلي</label>
+                  <div class="entry credential-entry">
+                    <textarea
+                      id="serial"
+                      rows="1"
+                      placeholder="مثال: DVH-2026-78421"
+                      autocomplete="off"
+                      autocorrect="off"
+                      spellcheck="false"
+                      aria-label="الرقم التسلسلي"
+                    ></textarea>
+                    <button class="primary verify-main-btn" id="verifyBtn">تحقق الآن ←</button>
+                  </div>
+
+                  <div class="credential-secondary-actions">
+                    <button class="soft" id="cameraBtn">⌾ مسح رمز QR</button>
+                    <label class="soft upload">▧ رفع صورة QR<input id="imageInput" type="file" accept="image/*" /></label>
+                  </div>
+
+                  <div class="search-card-foot">
+                    <span>🔒 يتم التحقق من السجل المحلي للمنصة</span>
+                    <button type="button" class="demo-serial" id="demoSerialBtn">استخدام الرمز التجريبي</button>
                   </div>
                 </div>
               </div>
-            </div>
+
+              <div class="credential-visual" aria-hidden="true">
+                <div class="live-label"><i></i> LIVE VERIFICATION</div>
+                <div class="credential-preview">
+                  <div class="credential-preview-head">
+                    <div class="preview-brand">DevsHub <b>Academy</b><small>.cc</small></div>
+                    <span class="preview-status">VERIFIED</span>
+                  </div>
+                  <div class="preview-certificate">
+                    <small>CERTIFICATE OF COMPLETION</small>
+                    <h3>Professional Credential</h3>
+                    <p>Issued to</p>
+                    <strong>Ahmed Ali</strong>
+                    <div class="preview-course">Web Development Essentials</div>
+                    <div class="preview-meta">
+                      <span>DVH-2026-78421</span>
+                      <span>12 Sep 2026</span>
+                    </div>
+                  </div>
+                  <div class="scan-beam premium-beam"></div>
+                </div>
+                <div class="verification-log">
+                  <div><i class="log-ok">✓</i><span><b>Certificate ID</b><small>Matched</small></span></div>
+                  <div><i class="log-ok">✓</i><span><b>Issuer record</b><small>Found</small></span></div>
+                  <div><i class="log-live"></i><span><b>Credential status</b><small>Valid</small></span></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="credential-trust-band">
+              <div><b>01</b><span><strong>رقم فريد لكل شهادة</strong><small>سيريال مخصص لكل سجل</small></span></div>
+              <div><b>02</b><span><strong>صفحة تحقق مباشرة</strong><small>نتيجة واضحة لصاحب العمل</small></span></div>
+              <div><b>03</b><span><strong>وصول عبر QR</strong><small>من الشهادة إلى السجل فوراً</small></span></div>
+            </section>
+
+            <section class="credential-how">
+              <div class="section-heading">
+                <span>HOW IT WORKS</span>
+                <h2>ثلاث خطوات للتحقق من أي شهادة</h2>
+                <p>تجربة بسيطة صُممت حتى يفهمها المتدرب وصاحب العمل من أول استخدام.</p>
+              </div>
+              <div class="how-grid">
+                <article><b>01</b><i>⌕</i><h3>أدخل السيريال</h3><p>اكتب رقم الشهادة أو الصقه كما هو مطبوع.</p></article>
+                <article><b>02</b><i>⌾</i><h3>نطابق السجل</h3><p>تتم مقارنة الرقم ببيانات الشهادة المسجلة في المنصة.</p></article>
+                <article><b>03</b><i>✓</i><h3>اعرض الاعتماد</h3><p>تظهر بيانات الشهادة وحالتها ونسختها الرقمية.</p></article>
+              </div>
+            </section>
+
+            <section class="credential-confidence">
+              <div>
+                <span class="credential-eyebrow">TRUSTED CREDENTIAL EXPERIENCE</span>
+                <h2>صفحة تحقق تعطي انطباع مؤسسة، مو مجرد نموذج بحث.</h2>
+                <p>تم تصميم تجربة التحقق لتبرز هوية الجهة المصدرة، وتعرض حالة الشهادة بوضوح، وتوصل المستخدم إلى نسخة الاعتماد الرقمية بدون تشتيت.</p>
+              </div>
+              <div class="confidence-list">
+                <span><i>✓</i> هوية واضحة للجهة المصدرة</span>
+                <span><i>✓</i> حالة اعتماد مباشرة ومفهومة</span>
+                <span><i>✓</i> عرض بيانات الشهادة في صفحة مستقلة</span>
+                <span><i>✓</i> تجربة متجاوبة للحاسوب والهاتف</span>
+              </div>
+            </section>
           </div>
         </section>
         <section class="view admin" id="admin">
@@ -2055,44 +3096,63 @@
           </div>
         </section>
         <section class="view" id="certificate">
-          <div class="cert-page">
-            <button class="back" id="backBtn">← العودة للتحقق</button>
-            <div class="verification-result">
-              <div class="result-status"><span>✓</span><div><b>تم التحقق من الشهادة بنجاح</b><p>السجل مطابق لبيانات الإصدار المسجلة لدى DevsHub Academy.</p></div></div>
-              <div class="result-grid">
-                <div class="pdf-panel">
-                  <div class="pdf-toolbar"><span>معاينة ملف الشهادة</span><small>PDF</small></div>
-                  <iframe id="pdfPreview" title="معاينة الشهادة PDF"></iframe>
-                  <div class="generated-pdf-preview" id="generatedPdfPreview">
-                    <div class="generated-paper">
-                      <div class="generated-brand">DevsHub <b>Academy</b><span>.cc</span></div>
-                      <span>CERTIFICATE OF COMPLETION</span>
-                      <h3>شهادة إتمام مهني</h3>
-                      <p>تتشرف الأكاديمية بمنح هذه الشهادة إلى</p>
-                      <h2 id="previewName">Ahmed Ali</h2>
-                      <p>لإتمام برنامج <b id="previewCourse">Web Development Essentials</b></p>
-                      <div><em>DevsHub Academy</em><strong id="previewSerial">DVH-2026-78421</strong></div>
-                    </div>
+          <div class="credential-result-page">
+            <div class="result-topbar">
+              <button class="back" id="backBtn">← تحقق من شهادة أخرى</button>
+              <div class="result-issuer"><span>◆</span><b>DevsHub Academy.cc</b></div>
+            </div>
+
+            <div class="verified-banner">
+              <span class="verified-icon">✓</span>
+              <div>
+                <small>VERIFICATION STATUS</small>
+                <h1>الشهادة موثّقة وسجلها مطابق</h1>
+                <p>تم العثور على سجل الشهادة في منصة DevsHub Academy.</p>
+              </div>
+              <b class="valid-pill">VALID CREDENTIAL</b>
+            </div>
+
+            <div class="credential-result-grid">
+              <div class="pdf-panel premium-pdf-panel">
+                <div class="pdf-toolbar"><span>نسخة الشهادة الرقمية</span><small>OFFICIAL PDF</small></div>
+                <iframe id="pdfPreview" title="معاينة الشهادة PDF"></iframe>
+                <div class="generated-pdf-preview" id="generatedPdfPreview">
+                  <div class="generated-paper">
+                    <div class="generated-brand">DevsHub <b>Academy</b><span>.cc</span></div>
+                    <span>CERTIFICATE OF COMPLETION</span>
+                    <h3>شهادة إتمام مهني</h3>
+                    <p>تتشرف الأكاديمية بمنح هذه الشهادة إلى</p>
+                    <h2 id="previewName">Ahmed Ali</h2>
+                    <p>لإتمام برنامج <b id="previewCourse">Web Development Essentials</b></p>
+                    <div><em>DevsHub Academy</em><strong id="previewSerial">DVH-2026-78421</strong></div>
                   </div>
                 </div>
-                <aside class="verification-details">
-                  <span class="kicker">OFFICIAL RECORD</span>
-                  <h1>شهادة إتمام مهني</h1>
-                  <h2 id="certName">Ahmed Ali</h2>
-                  <p class="course" id="certCourse">Web Development Essentials</p>
-                  <div class="cert-data">
-                    <div>السيريال<b id="certSerial"></b></div>
-                    <div>تاريخ الإصدار<b id="certDate"></b></div>
-                    <div>الحالة<b style="color: #139b70">موثّقة</b></div>
-                  </div>
-                  <p class="formal-note">هذه الشهادة صالحة ومطابقة لسجل الإصدار الإلكتروني للأكاديمية.</p>
-                  <button class="primary download" id="downloadBtn">⇩ تنزيل الشهادة PDF</button>
-                </aside>
               </div>
+
+              <aside class="verification-details premium-details">
+                <div class="record-label"><i></i> OFFICIAL RECORD</div>
+                <span class="record-type">Professional Certificate</span>
+                <h2 id="certName">Ahmed Ali</h2>
+                <p class="course" id="certCourse">Web Development Essentials</p>
+
+                <div class="credential-record-list">
+                  <div><span>الجهة المصدرة</span><b>DevsHub Academy.cc</b></div>
+                  <div><span>رقم الشهادة</span><b id="certSerial"></b></div>
+                  <div><span>تاريخ الإصدار</span><b id="certDate"></b></div>
+                  <div><span>حالة الاعتماد</span><b class="record-valid">✓ موثّقة</b></div>
+                </div>
+
+                <div class="record-note">
+                  <i>✓</i>
+                  <p><b>سجل رقمي صالح</b><span>هذه البيانات مطابقة لسجل الإصدار الموجود داخل المنصة.</span></p>
+                </div>
+
+                <button class="primary download" id="downloadBtn">⇩ تنزيل الشهادة PDF</button>
+              </aside>
             </div>
           </div>
         </section>
-      </main>
+       </main>
     </div>
     <div class="modal" id="addModal">
       <div class="dialog">
@@ -2275,6 +3335,11 @@
       $('.role[data-v="admin"]').onclick = () => {
         location.hash = "admin";
         show("admin");
+      };
+
+      $("#demoSerialBtn").onclick = () => {
+        $("#serial").value = "DVH-2026-78421";
+        $("#serial").focus();
       };
 
       $("#verifyBtn").onclick = () => showCert(find($("#serial").value));
