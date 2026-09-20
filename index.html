@@ -1256,6 +1256,341 @@
       }
     </style>
 
+  
+    <style>
+      /* VERIFY ADMIN EXACT v2 */
+
+      body[data-view="verify"] {
+        background: #061b28 !important;
+        color: #eef7fb;
+      }
+
+      body[data-view="verify"] .top {
+        background: #061b28 !important;
+        border-bottom: 1px solid #ffffff1c !important;
+      }
+
+      body[data-view="verify"] .brand {
+        color: #ffffff !important;
+      }
+
+      body[data-view="verify"] .brand .academy,
+      body[data-view="verify"] .brand svg path:last-child {
+        color: #1ec5d5 !important;
+        fill: #1ec5d5 !important;
+      }
+
+      body[data-view="verify"] .switch {
+        background: #ffffff0d !important;
+        border: 1px solid #ffffff24 !important;
+        border-radius: 6px !important;
+        box-shadow: none !important;
+      }
+
+      body[data-view="verify"] .switch button {
+        color: #b8cbd5 !important;
+        border-radius: 4px !important;
+      }
+
+      body[data-view="verify"] .switch button.active {
+        background: #edf7f9 !important;
+        color: #0d2a38 !important;
+      }
+
+      #verify {
+        position: relative;
+        right: 50%;
+        width: 100vw;
+        margin-right: -50vw;
+        min-height: calc(100vh - 88px);
+        padding: 22px 0 34px;
+        background: #061b28 !important;
+        color: #17324d !important;
+      }
+
+      .verify-page {
+        width: min(1120px, calc(100% - 44px)) !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+      }
+
+      .verify-shell {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        min-height: 690px;
+        overflow: hidden;
+        background: #ffffff;
+        box-shadow: 0 22px 55px #00000024;
+      }
+
+      .verify-sidebar {
+        display: flex;
+        flex-direction: column;
+        padding: 27px 16px;
+        background: linear-gradient(160deg, #082b3a, #041a27);
+        color: #c8dce3;
+      }
+
+      .verify-side-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0 8px 35px;
+        direction: ltr;
+        color: #ffffff;
+        font-size: 13px;
+        line-height: 1.2;
+      }
+
+      .verify-side-brand span {
+        color: #1dc6d5;
+        font-size: 22px;
+      }
+
+      .verify-side-title {
+        margin: 0 8px 8px;
+        color: #ffffff;
+        font-size: 15px;
+        font-weight: 800;
+      }
+
+      .verify-sidebar > p {
+        margin: 0 8px 24px;
+        color: #8fb1be;
+        font-size: 11px;
+        line-height: 1.9;
+      }
+
+      .verify-side-step {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-bottom: 7px;
+        padding: 10px;
+        border-radius: 5px;
+        color: #c8dce3;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .verify-side-step b {
+        display: grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 5px;
+        background: #ffffff0d;
+        color: #75dce5;
+        font: 800 9px Arial, sans-serif;
+      }
+
+      .verify-side-step.active {
+        background: linear-gradient(90deg, #0e7280, #0a4353);
+        color: #ffffff;
+      }
+
+      .verify-content {
+        min-width: 0;
+        padding: 58px 64px 64px;
+        background: #f8fbfc;
+      }
+
+      .verify-layout {
+        max-width: 690px;
+        margin: 0 auto;
+      }
+
+      .verify-eyebrow {
+        display: inline-flex !important;
+        align-items: center;
+        gap: 7px;
+        padding: 0 !important;
+        border: 0 !important;
+        background: transparent !important;
+        color: #0e7280 !important;
+        font-size: 11px !important;
+        font-weight: 800 !important;
+        letter-spacing: .5px !important;
+      }
+
+      .verify-layout h1 {
+        margin: 15px 0 8px !important;
+        color: #102a39 !important;
+        font-size: clamp(36px, 4vw, 50px) !important;
+        line-height: 1.28 !important;
+        letter-spacing: -1px !important;
+      }
+
+      .verify-lead {
+        max-width: 590px !important;
+        margin: 0 !important;
+        color: #607786 !important;
+        font-size: 15px !important;
+        line-height: 1.9 !important;
+      }
+
+      .verify-search-card {
+        margin-top: 30px !important;
+        padding: 29px !important;
+        border: 1px solid #d9e3ea !important;
+        border-radius: 8px !important;
+        background: #ffffff !important;
+        box-shadow: 0 6px 16px #17324d0b !important;
+      }
+
+      .verify-search-card::before {
+        display: none !important;
+      }
+
+      .verify-search-card > label {
+        display: block;
+        margin-bottom: 8px !important;
+        color: #324a59 !important;
+        font-size: 12px !important;
+        font-weight: 800 !important;
+      }
+
+      .verify-search-card .entry {
+        gap: 9px !important;
+      }
+
+      .verify-search-card .entry input {
+        min-height: 50px !important;
+        border: 1px solid #d4e0e5 !important;
+        border-radius: 5px !important;
+        background: #ffffff !important;
+        color: #17324d !important;
+        font-size: 13px !important;
+      }
+
+      .verify-search-card .entry input:focus {
+        border-color: #0e7280 !important;
+        box-shadow: 0 0 0 3px #0e728017 !important;
+      }
+
+      .verify-search-card .primary {
+        min-width: 112px !important;
+        min-height: 50px !important;
+        border-radius: 5px !important;
+        background: #17324d !important;
+        box-shadow: 0 6px 14px #17324d1f !important;
+      }
+
+      .verify-search-card .primary:hover {
+        background: #0d5263 !important;
+      }
+
+      .verify-search-card > p {
+        margin: 10px 0 0 !important;
+        color: #758692 !important;
+        font-size: 11px !important;
+        line-height: 1.8 !important;
+      }
+
+      .verify-or {
+        margin: 21px 0 !important;
+        color: #8697a2 !important;
+        font-size: 11px !important;
+      }
+
+      .verify-or:before,
+      .verify-or:after {
+        background: #e2e9ed !important;
+      }
+
+      .verify-actions {
+        gap: 9px !important;
+      }
+
+      .verify-actions .soft {
+        min-height: 47px !important;
+        border: 1px solid #d3e1e5 !important;
+        border-radius: 5px !important;
+        background: #f3f8f9 !important;
+        color: #195968 !important;
+      }
+
+      .verify-actions .soft:hover {
+        border-color: #9dc4cc !important;
+        background: #e8f3f5 !important;
+      }
+
+      .verify-note {
+        margin: 18px 2px 0 !important;
+        color: #758894 !important;
+        font-size: 11px !important;
+        line-height: 1.8 !important;
+      }
+
+      #verify .tip {
+        display: inline-block !important;
+        margin-top: 12px !important;
+        padding: 8px 10px !important;
+        border: 1px solid #d9e3ea !important;
+        border-radius: 5px !important;
+        background: #ffffff !important;
+        color: #647986 !important;
+      }
+
+      #verify .tip b {
+        color: #0e7280 !important;
+      }
+
+      @media (max-width: 720px) {
+        #verify {
+          padding-top: 12px;
+        }
+
+        .verify-page {
+          width: min(100% - 24px, 580px) !important;
+        }
+
+        .verify-shell {
+          display: block;
+          min-height: 0;
+        }
+
+        .verify-sidebar {
+          padding: 18px 16px;
+        }
+
+        .verify-side-brand {
+          margin-bottom: 10px;
+        }
+
+        .verify-side-title,
+        .verify-sidebar > p,
+        .verify-side-step {
+          display: none;
+        }
+
+        .verify-content {
+          padding: 34px 20px 42px;
+        }
+
+        .verify-layout h1 {
+          font-size: 34px !important;
+        }
+
+        .verify-search-card {
+          padding: 21px 17px !important;
+        }
+
+        .verify-search-card .entry {
+          display: grid !important;
+          grid-template-columns: 1fr !important;
+        }
+
+        .verify-search-card .primary {
+          width: 100%;
+        }
+
+        .verify-actions {
+          grid-template-columns: 1fr !important;
+        }
+      }
+    </style>
+
   </head>
   <body>
     <div class="wrap">
@@ -1277,24 +1612,36 @@
       <main>
         <section class="view active" id="verify">
           <div class="verify-page">
-            <div class="verify-layout">
-              <span class="verify-eyebrow">⌾ التحقق من الشهادات</span>
-              <h1>تحقق من شهادة<br />DevsHub Academy</h1>
-              <p class="verify-lead">أدخل الرقم التسلسلي أو امسح رمز QR للوصول إلى سجل الشهادة الرسمي.</p>
-              <div class="verify-search-card">
-                <label for="serial">الرقم التسلسلي</label>
-                <div class="entry">
-                  <input id="serial" placeholder="أدخل السيريال المطبوع" /><button class="primary" id="verifyBtn">← تحقق</button>
-                </div>
-                <p>اكتب السيريال تماماً كما هو مطبوع على الشهادة. يمكنك أيضاً لصقه مباشرة.</p>
-                <div class="verify-or"><span>أو</span></div>
-                <div class="verify-actions">
-                  <button class="soft" id="cameraBtn">⌾ مسح رمز QR بالكاميرا</button>
-                  <label class="soft upload">▧ رفع صورة الرمز<input id="imageInput" type="file" accept="image/*" /></label>
+            <div class="verify-shell">
+              <aside class="verify-sidebar">
+                <div class="verify-side-brand"><span>◆</span><b>DevsHub<br />Academy</b></div>
+                <div class="verify-side-title">التحقق من الشهادات</div>
+                <p>بوابة التحقق الرسمية من شهادات الأكاديمية.</p>
+                <div class="verify-side-step active"><b>01</b><span>أدخل السيريال</span></div>
+                <div class="verify-side-step"><b>02</b><span>تحقق من السجل</span></div>
+                <div class="verify-side-step"><b>03</b><span>اعرض الشهادة</span></div>
+              </aside>
+              <div class="verify-content">
+                <div class="verify-layout">
+                  <span class="verify-eyebrow">⌾ التحقق من الشهادات</span>
+                  <h1>تحقق من شهادة<br />DevsHub Academy</h1>
+                  <p class="verify-lead">أدخل الرقم التسلسلي أو امسح رمز QR للوصول إلى سجل الشهادة الرسمي.</p>
+                  <div class="verify-search-card">
+                    <label for="serial">الرقم التسلسلي</label>
+                    <div class="entry">
+                      <input id="serial" placeholder="أدخل السيريال المطبوع" /><button class="primary" id="verifyBtn">← تحقق</button>
+                    </div>
+                    <p>اكتب السيريال تماماً كما هو مطبوع على الشهادة. يمكنك أيضاً لصقه مباشرة.</p>
+                    <div class="verify-or"><span>أو</span></div>
+                    <div class="verify-actions">
+                      <button class="soft" id="cameraBtn">⌾ مسح رمز QR بالكاميرا</button>
+                      <label class="soft upload">▧ رفع صورة الرمز<input id="imageInput" type="file" accept="image/*" /></label>
+                    </div>
+                  </div>
+                  <p class="verify-note">يتم طلب إذن الكاميرا فقط عند اختيار المسح. بيانات الشهادات المعروضة مخصصة للتحقق الرسمي.</p>
+                  <div class="tip">رمز تجريبي للتحقق: <b>DVH-2026-78421</b></div>
                 </div>
               </div>
-              <p class="verify-note">يتم طلب إذن الكاميرا فقط عند اختيار المسح. بيانات الشهادات المعروضة مخصصة للتحقق الرسمي.</p>
-              <div class="tip">رمز تجريبي للتحقق: <b>DVH-2026-78421</b></div>
             </div>
           </div>
         </section>
