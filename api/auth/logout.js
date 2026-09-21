@@ -1,6 +1,9 @@
 "use strict";
 
-const { clearSessionCookies } = require("../../server/auth");
+const {
+  clearSessionCookies,
+  clearActiveOrganizationCookie,
+} = require("../../server/auth");
 
 function json(res, status, body) {
   res.statusCode = status;
@@ -17,5 +20,6 @@ module.exports = async function handler(req, res) {
   }
 
   clearSessionCookies(res);
+  clearActiveOrganizationCookie(res);
   return json(res, 200, { authenticated: false });
 };
