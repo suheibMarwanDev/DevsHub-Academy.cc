@@ -4,6 +4,7 @@ const { databaseConfig } = require("./database");
 
 const ACCESS_COOKIE = "devshub_access";
 const REFRESH_COOKIE = "devshub_refresh";
+const ORG_COOKIE = "devshub_org";
 
 function isDemoMode() {
   return String(process.env.DEMO_MODE || "true").toLowerCase() !== "false";
@@ -179,34 +180,44 @@ async function serviceRest(path) {
   return response.json();
 }
 
-async function getMembership(userId) {
+async function getMemberships(userId) {
   const rows = await serviceRest(
-    "organization_members?select=id,organization_id,role&user_id=eq." +
-      encodeURIComponent(userId) +
-      "&limit=1",
+    "organization_members?select=id,organization_id,role,organizations(id,name,display_name,slug,verification_slug,custom_domain,status,logo_path,primary_color,secondary_color)&user_id=eq." +
+      encodeURIComponent(userId),
   );
 
-  if (!Array.isArray(rows) || !rows[0]) return null;
+  if (!Array.isArray(rows)) return [];
 
-  const member = rows[0];
-  const organizations = await serviceRest(
-    "organizations?select=id,name,slug,status&id=eq." +
-      encodeURIComponent(member.organization_id) +
-      "&limit=1",
-  );
+  return rows
+    .map((member) => {
+      const organization = member.organizations || null;
+      if (!organization || organization.status !== "active") return null;
+      return {
+        id: member.id,
+        role: member.role,
+        organization,
+      };
+    })
+    .filter(Boolean);
+}
 
-  const organization =
-    Array.isArray(organizations) && organizations[0]
-      ? organizations[0]
-      : null;
+async function getMembership(userId) {
+  const memberships = await getMemberships(userId);
+  return memberships[0] || null;
+}
 
-  if (!organization || organization.status !== "active") return null;
+function setActiveOrganizationCookie(res, slug) {
+  appendSetCookie(res, [
+    cookie(ORG_COOKIE, slug || "", {
+      maxAge: 60 * 60 * 24 * 30,
+    }),
+  ]);
+}
 
-  return {
-    id: member.id,
-    role: member.role,
-    organization,
-  };
+function clearActiveOrganizationCookie(res) {
+  appendSetCookie(res, [
+    cookie(ORG_COOKIE, "", { maxAge: 0 }),
+  ]);
 }
 
 async function resolveSession(req, res) {
@@ -219,9 +230,22 @@ async function resolveSession(req, res) {
         role: "demo",
         organization: {
           name: "DevsHub Academy",
+          display_name: "DevsHub Academy",
           slug: "devshub-academy",
+          verification_slug: "devshub-academy",
         },
       },
+      memberships: [
+        {
+          role: "demo",
+          organization: {
+            name: "DevsHub Academy",
+            display_name: "DevsHub Academy",
+            slug: "devshub-academy",
+            verification_slug: "devshub-academy",
+          },
+        },
+      ],
     };
   }
 
@@ -264,14 +288,27 @@ async function resolveSession(req, res) {
     };
   }
 
-  const membership = await getMembership(user.id);
-  if (!membership) {
+  const memberships = await getMemberships(user.id);
+  if (!memberships.length) {
     clearSessionCookies(res);
     return {
       authenticated: false,
       demoMode: false,
       membershipRequired: true,
     };
+  }
+
+  const requestedSlug = String(cookies[ORG_COOKIE] || "").trim();
+  const membership =
+    memberships.find(
+      (item) => item.organization?.slug === requestedSlug,
+    ) || memberships[0];
+
+  if (membership?.organization?.slug !== requestedSlug) {
+    setActiveOrganizationCookie(
+      res,
+      membership?.organization?.slug || "",
+    );
   }
 
   return {
@@ -282,6 +319,7 @@ async function resolveSession(req, res) {
       email: user.email || null,
     },
     membership,
+    memberships,
   };
 }
 
@@ -322,8 +360,11 @@ module.exports = {
   isDemoMode,
   signInWithPassword,
   getMembership,
+  getMemberships,
   resolveSession,
   requireAdminAccess,
   setSessionCookies,
   clearSessionCookies,
+  setActiveOrganizationCookie,
+  clearActiveOrganizationCookie,
 };
