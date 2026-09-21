@@ -5,6 +5,7 @@ const {
   listCertificates,
   getCertificate,
   createCertificate,
+  createCertificates,
   updateCertificate,
 } = require("../server/storage");
 const {
@@ -199,6 +200,89 @@ module.exports = async function handler(req, res) {
       }
 
       const body = parseRequestBody(req.body) || {};
+      const bulkInput = Array.isArray(body.bulk)
+        ? body.bulk
+        : Array.isArray(body.certificates)
+          ? body.certificates
+          : null;
+
+      if (bulkInput) {
+        if (!bulkInput.length || bulkInput.length > 200) {
+          return json(res, 400, {
+            error: "Bulk issuance supports 1 to 200 certificates per request",
+          });
+        }
+
+        const prepared = [];
+        const serials = new Set();
+
+        for (let index = 0; index < bulkInput.length; index += 1) {
+          const item = bulkInput[index] || {};
+          const normalizedItem = normalizeCertificate(item, {
+            requireSerial: false,
+          });
+
+          if (!normalizedItem) {
+            return json(res, 400, {
+              error: "Invalid certificate payload in bulk request",
+              row: index + 1,
+            });
+          }
+
+          let serial;
+          do {
+            serial = generateSerial(item.prefix || body.prefix);
+          } while (serials.has(serial));
+
+          serials.add(serial);
+          prepared.push({
+            ...normalizedItem,
+            serial,
+            status: normalizedItem.status || "valid",
+          });
+        }
+
+        if (!storageConfig().configured) {
+          if (!isDemoMode()) {
+            return json(res, 503, {
+              error: "Cloud storage is not configured",
+            });
+          }
+
+          return json(res, 201, {
+            certificates: prepared,
+            count: prepared.length,
+            storage: "demo",
+            persisted: false,
+          });
+        }
+
+        const created = await createCertificates(prepared, {
+          organizationId: organizationIdFrom(access),
+        });
+
+        if (databaseConfig().configured) {
+          await logAudit({
+            organizationId: organizationIdFrom(access),
+            actorUserId: actorIdFrom(access),
+            action: "certificate.bulk_issued",
+            entityType: "certificate",
+            entityId: null,
+            details: {
+              count: created.length,
+              serials: created.map((item) => item.serial),
+            },
+          }).catch(() => {});
+        }
+
+        return json(res, 201, {
+          certificates: created.map(clientCertificate),
+          count: created.length,
+          storage: storageConfig().provider,
+          persisted: true,
+        });
+      }
+
       const normalized = normalizeCertificate(body, { requireSerial: false });
 
       if (!normalized) {
