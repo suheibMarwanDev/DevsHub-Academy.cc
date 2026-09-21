@@ -4,7 +4,7 @@
   "private": true,
   "description": "Certificate verification and credential management demo platform.",
   "scripts": {
-    "build": "node scripts/build.mjs",
+    "build:static": "node scripts/build.mjs",
     "check": "node scripts/check.mjs"
   },
   "engines": {
