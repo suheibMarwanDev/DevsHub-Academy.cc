@@ -20,6 +20,11 @@ const {
 } = require("../server/certificates");
 const { requireAdminAccess } = require("../server/auth");
 const {
+  requestOriginAllowed,
+  allowRateLimitedRequest,
+  applyApiSecurityHeaders,
+} = require("../server/security");
+const {
   databaseConfig,
   getDashboardMetrics,
   getOrganizationById,
@@ -28,6 +33,7 @@ const {
 } = require("../server/database");
 
 function json(res, status, body) {
+  applyApiSecurityHeaders(res);
   res.statusCode = status;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Cache-Control", "no-store");
@@ -121,6 +127,18 @@ module.exports = async function handler(req, res) {
       const serial = String(req.query?.serial || "").trim().toUpperCase();
 
       if (serial) {
+        const allowed = await allowRateLimitedRequest(
+          req,
+          "verification",
+          60,
+          60,
+        );
+        if (!allowed) {
+          return json(res, 429, {
+            error: "Too many verification requests. Try again shortly.",
+          });
+        }
+
         const certificate = storageConfig().configured
           ? await getCertificate(serial)
           : null;
@@ -265,6 +283,10 @@ module.exports = async function handler(req, res) {
     }
 
     if (req.method === "POST") {
+      if (!requestOriginAllowed(req)) {
+        return json(res, 403, { error: "Invalid request origin" });
+      }
+
       const access = await requireAdminAccess(req, res, { write: true });
       if (!access.allowed) {
         return json(res, access.status || 401, {
@@ -401,6 +423,10 @@ module.exports = async function handler(req, res) {
     }
 
     if (req.method === "PATCH") {
+      if (!requestOriginAllowed(req)) {
+        return json(res, 403, { error: "Invalid request origin" });
+      }
+
       const access = await requireAdminAccess(req, res, { write: true });
       if (!access.allowed) {
         return json(res, access.status || 401, {
