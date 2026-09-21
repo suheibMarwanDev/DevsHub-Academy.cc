@@ -2,6 +2,7 @@
 
 const { requireAdminAccess } = require("../lib/auth");
 const {
+  databaseConfig,
   getDefaultOrganizationId,
   getOrganizationById,
   listCertificateTemplates,
@@ -9,7 +10,10 @@ const {
   deleteCertificateTemplate,
   logAudit,
 } = require("../lib/database");
-const { removeObject } = require("../lib/file-storage");
+const {
+  fileStorageConfig,
+  removeObject,
+} = require("../lib/file-storage");
 
 function json(res, status, body) {
   res.statusCode = status;
@@ -46,6 +50,13 @@ module.exports = async function handler(req, res) {
         error: write
           ? "This account does not have asset management permission"
           : "Admin authentication required",
+      });
+    }
+
+    if (!databaseConfig().configured || !fileStorageConfig().configured) {
+      return json(res, 503, {
+        error: "Supabase database/storage is not configured",
+        storageConfigured: false,
       });
     }
 
