@@ -2,6 +2,7 @@
 
 const { storageConfig } = require("./lib/storage");
 const { authConfig, isDemoMode } = require("./lib/auth");
+const { fileStorageConfig } = require("./lib/file-storage");
 
 module.exports = async function handler(req, res) {
   if (req.method !== "GET") {
@@ -12,6 +13,7 @@ module.exports = async function handler(req, res) {
 
   const storage = storageConfig();
   const auth = authConfig();
+  const files = fileStorageConfig();
 
   res.statusCode = 200;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -24,6 +26,8 @@ module.exports = async function handler(req, res) {
       storageConfigured: storage.configured,
       storageProvider: storage.provider,
       authenticationConfigured: auth.configured,
+      fileStorageConfigured: files.configured,
+      fileStorageBucket: files.bucket,
       demoMode: isDemoMode(),
     }),
   );
