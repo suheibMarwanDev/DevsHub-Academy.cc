@@ -43,7 +43,7 @@ function normalizeStatus(value, fallback = "valid") {
 function generateSerial(prefix = "DVH", now = new Date()) {
   const safePrefix = normalizePrefix(prefix);
   const year = now.getUTCFullYear();
-  const randomPart = crypto.randomInt(100000, 1000000);
+  const randomPart = crypto.randomInt(10000000, 100000000);
   return safePrefix + "-" + year + "-" + String(randomPart);
 }
 
