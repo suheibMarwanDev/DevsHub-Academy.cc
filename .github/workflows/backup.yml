@@ -1,0 +1,31 @@
+name: Supabase Backup
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 2 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Export database
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: npm run backup
+      - name: Upload backup artifact
+        if: ${{ hashFiles('backups/*.json') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: devshub-backup-${{ github.run_id }}
+          path: backups/*.json
+          retention-days: 14
