@@ -19,6 +19,8 @@ Do not hide either experience until the sales/demo phase is complete.
 ├── api/
 │   ├── certificates.js     # Certificate API
 │   ├── health.js           # Deployment/config health endpoint
+│   ├── auth/               # Login/session/logout endpoints
+│   ├── storage/            # Private PDF/logo/template delivery
 │   └── lib/
 │       ├── certificates.js # Validation + demo-mode policy
 │       └── storage.js      # Redis/KV storage adapter
@@ -65,3 +67,18 @@ Before a real customer launch:
 5. Add organization/user roles and audit logs.
 
 The current visual Admin/Verifier layout should remain unchanged during the marketing phase unless explicitly requested.
+
+
+## Private file storage
+
+Certificate PDFs, organization logos, and certificate templates are designed for private Supabase Storage.
+
+Apply `supabase/migrations/003_cloud_storage.sql` and configure:
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_STORAGE_BUCKET=devshub-assets`
+
+The database stores object paths while the backend issues temporary signed URLs when files are opened.
+
+See `docs/cloud-storage.md` for the full storage design.
