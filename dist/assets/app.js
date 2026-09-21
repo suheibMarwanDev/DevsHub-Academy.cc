@@ -42,7 +42,100 @@ const base = [
       }
 
       const CERT_API = "/api/certificates";
+      const AUTH_API = "/api/auth";
       let cloudSyncAvailable = false;
+      let authState = {
+        checked: false,
+        authenticated: false,
+        demoMode: true,
+        user: null,
+        membership: null,
+      };
+
+      function updateAuthUi() {
+        const logout = $("#logoutBtn");
+        if (!logout) return;
+        logout.hidden =
+          authState.demoMode ||
+          !authState.authenticated ||
+          !authState.user;
+      }
+
+      function showLoginError(message) {
+        const error = $("#loginError");
+        error.textContent = message || "";
+        error.hidden = !message;
+      }
+
+      function openLoginModal(message = "") {
+        showLoginError(message);
+        $("#loginModal").classList.add("show");
+        $("#loginModal").setAttribute("aria-hidden", "false");
+        setTimeout(() => $("#loginEmail")?.focus(), 40);
+      }
+
+      function closeLoginModal() {
+        $("#loginModal").classList.remove("show");
+        $("#loginModal").setAttribute("aria-hidden", "true");
+        showLoginError("");
+      }
+
+      async function loadAdminSession(force = false) {
+        if (authState.checked && !force) return authState;
+
+        try {
+          const response = await fetch(AUTH_API + "/session", {
+            cache: "no-store",
+            credentials: "same-origin",
+          });
+          const session = await response.json();
+          authState = {
+            checked: true,
+            authenticated: Boolean(session.authenticated),
+            demoMode: Boolean(session.demoMode),
+            user: session.user || null,
+            membership: session.membership || null,
+            configurationRequired: Boolean(session.configurationRequired),
+          };
+        } catch (error) {
+          authState = {
+            checked: true,
+            authenticated: false,
+            demoMode: false,
+            user: null,
+            membership: null,
+            error: true,
+          };
+        }
+
+        updateAuthUi();
+        return authState;
+      }
+
+      async function enterAdmin() {
+        const session = await loadAdminSession(true);
+
+        if (session.authenticated) {
+          closeLoginModal();
+          location.hash = "admin";
+          show("admin");
+          await hydrateRemoteCerts();
+          return true;
+        }
+
+        location.hash = "";
+        show("verify");
+
+        if (session.configurationRequired) {
+          openLoginModal(
+            "نظام تسجيل الدخول غير مربوط بعد. أضف إعدادات Supabase Auth في بيئة التشغيل.",
+          );
+        } else {
+          openLoginModal();
+        }
+
+        return false;
+      }
 
       function cloudSafeCertificate(cert) {
         if (!cert) return cert;
@@ -345,10 +438,83 @@ const base = [
         location.hash = "";
         show("verify");
       };
-      $('.role[data-v="admin"]').onclick = async () => {
-        location.hash = "admin";
-        show("admin");
-        await hydrateRemoteCerts();
+      $('.role[data-v="admin"]').onclick = enterAdmin;
+
+      $("#loginForm").onsubmit = async (event) => {
+        event.preventDefault();
+
+        const email = $("#loginEmail").value.trim();
+        const password = $("#loginPassword").value;
+        const button = $("#loginBtn");
+
+        showLoginError("");
+        button.disabled = true;
+        button.textContent = "جاري تسجيل الدخول…";
+
+        try {
+          const response = await fetch(AUTH_API + "/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "same-origin",
+            body: JSON.stringify({ email, password }),
+          });
+
+          const payload = await response.json().catch(() => ({}));
+
+          if (!response.ok || !payload.authenticated) {
+            if (payload.configurationRequired) {
+              throw new Error("نظام تسجيل الدخول غير مربوط بعد ببيئة التشغيل.");
+            }
+            throw new Error(
+              response.status === 403
+                ? "هذا الحساب غير مرتبط بمؤسسة مخولة."
+                : "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+            );
+          }
+
+          authState = {
+            checked: true,
+            authenticated: true,
+            demoMode: Boolean(payload.demoMode),
+            user: payload.user || null,
+            membership: payload.membership || null,
+          };
+          updateAuthUi();
+          closeLoginModal();
+          location.hash = "admin";
+          show("admin");
+          await hydrateRemoteCerts();
+          $("#loginPassword").value = "";
+        } catch (error) {
+          showLoginError(error.message || "تعذر تسجيل الدخول.");
+        } finally {
+          button.disabled = false;
+          button.textContent = "دخول إلى الإدارة";
+        }
+      };
+
+      $("#closeLogin").onclick = () => {
+        closeLoginModal();
+        location.hash = "";
+        show("verify");
+      };
+
+      $("#logoutBtn").onclick = async () => {
+        await fetch(AUTH_API + "/logout", {
+          method: "POST",
+          credentials: "same-origin",
+        }).catch(() => {});
+
+        authState = {
+          checked: true,
+          authenticated: false,
+          demoMode: false,
+          user: null,
+          membership: null,
+        };
+        updateAuthUi();
+        location.hash = "";
+        show("verify");
       };
 
       $("#demoSerialBtn").onclick = () => {
@@ -680,8 +846,7 @@ const base = [
         }
 
         if (location.hash === "#admin") {
-          show("admin");
-          await hydrateRemoteCerts();
+          await enterAdmin();
         }
       }
 
