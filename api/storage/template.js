@@ -1,11 +1,11 @@
 "use strict";
 
-const { requireAdminAccess } = require("../lib/auth");
+const { requireAdminAccess } = require("../../server/auth");
 const {
   getDefaultOrganizationId,
   listCertificateTemplates,
-} = require("../lib/database");
-const { createSignedUrl } = require("../lib/file-storage");
+} = require("../../server/database");
+const { createSignedUrl } = require("../../server/file-storage");
 
 module.exports = async function handler(req, res) {
   if (req.method !== "GET") {
