@@ -22,6 +22,7 @@ const { requireAdminAccess } = require("../server/auth");
 const {
   databaseConfig,
   getDashboardMetrics,
+  getOrganizationById,
   logAudit,
   logVerification,
 } = require("../server/database");
@@ -35,7 +36,7 @@ function json(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
-function clientCertificate(certificate) {
+function clientCertificate(certificate, issuer = null) {
   if (!certificate) return null;
 
   const { pdfPath, ...client } = certificate;
@@ -49,6 +50,19 @@ function clientCertificate(certificate) {
     client.hasPdf = true;
   } else {
     client.hasPdf = false;
+  }
+
+  if (issuer) {
+    client.issuer = {
+      id: issuer.id,
+      name: issuer.display_name || issuer.name,
+      slug: issuer.verification_slug || issuer.slug,
+      logoUrl: issuer.logo_path
+        ? "/api/storage/logo?slug=" + encodeURIComponent(issuer.slug)
+        : null,
+      primaryColor: issuer.primary_color || null,
+      secondaryColor: issuer.secondary_color || null,
+    };
   }
 
   return client;
@@ -128,8 +142,31 @@ module.exports = async function handler(req, res) {
           }).catch(() => {});
         }
 
+        let issuer = null;
+        if (
+          result?.organizationId &&
+          databaseConfig().configured
+        ) {
+          issuer = await getOrganizationById(
+            result.organizationId,
+          ).catch(() => null);
+        }
+
+        if (!issuer && result) {
+          issuer = {
+            id: result.organizationId || null,
+            name: "DevsHub Academy",
+            display_name: "DevsHub Academy",
+            slug: "devshub-academy",
+            verification_slug: "devshub-academy",
+            logo_path: null,
+            primary_color: "#0B7783",
+            secondary_color: "#0B2B34",
+          };
+        }
+
         return json(res, result ? 200 : 404, {
-          certificate: clientCertificate(result),
+          certificate: clientCertificate(result, issuer),
           storage: storageConfig().provider,
         });
       }
