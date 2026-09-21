@@ -456,9 +456,13 @@ const base = [
           : 'تحقق من السجل <span>↗</span>';
       }
 
-      async function fetchCertificateBySerial(serial) {
+      async function fetchCertificateBySerial(serial, source = "serial") {
         const response = await fetch(
-          CERT_API + "?serial=" + encodeURIComponent(serial),
+          CERT_API +
+            "?serial=" +
+            encodeURIComponent(serial) +
+            "&source=" +
+            encodeURIComponent(source),
           {
             cache: "no-store",
             credentials: "same-origin",
@@ -476,7 +480,7 @@ const base = [
         return payload.certificate || null;
       }
 
-      async function verifySerial(value) {
+      async function verifySerial(value, source = "serial") {
         const serial = String(value || "").trim().toUpperCase();
         if (!serial) {
           $("#badSerial").textContent = "اكتب الرقم التسلسلي أولاً";
@@ -491,7 +495,7 @@ const base = [
           let certificate = null;
 
           try {
-            certificate = await fetchCertificateBySerial(serial);
+            certificate = await fetchCertificateBySerial(serial, source);
           } catch (error) {
             if (storageProvider !== "demo") throw error;
           }
@@ -911,7 +915,7 @@ const base = [
         if (!serial) return false;
         $("#serial").value = serial;
         stopCameraScanner();
-        await verifySerial(serial);
+        await verifySerial(serial, "qr");
         return true;
       }
 
@@ -1071,7 +1075,7 @@ const base = [
           let certificate = null;
 
           try {
-            certificate = await fetchCertificateBySerial(serial);
+            certificate = await fetchCertificateBySerial(serial, "direct_link");
           } catch (error) {}
 
           if (!certificate && storageProvider === "demo") {
