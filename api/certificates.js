@@ -11,8 +11,8 @@ const {
   normalizeCertificate,
   parseRequestBody,
   isDemoMode,
-  canWrite,
 } = require("./lib/certificates");
+const { requireAdminAccess } = require("./lib/auth");
 
 function json(res, status, body) {
   res.statusCode = status;
@@ -39,6 +39,14 @@ module.exports = async function handler(req, res) {
         });
       }
 
+      const access = await requireAdminAccess(req, res, { write: false });
+      if (!access.allowed) {
+        return json(res, access.status || 401, {
+          error: "Admin authentication required",
+          authenticated: false,
+        });
+      }
+
       const stored = await listCertificates();
       const certificates = stored.length ? stored : BASE_CERTIFICATES;
 
@@ -46,13 +54,23 @@ module.exports = async function handler(req, res) {
         certificates,
         storage: storageConfig().provider,
         demoMode: isDemoMode(),
+        session: {
+          demoMode: access.session.demoMode,
+          user: access.session.user || null,
+          membership: access.session.membership || null,
+        },
       });
     }
 
     if (req.method === "POST") {
-      if (!canWrite(req)) {
-        return json(res, 401, {
-          error: "Admin authentication required",
+      const access = await requireAdminAccess(req, res, { write: true });
+      if (!access.allowed) {
+        return json(res, access.status || 401, {
+          error:
+            access.status === 403
+              ? "This account does not have permission to issue certificates"
+              : "Admin authentication required",
+          authenticated: Boolean(access.session?.authenticated),
         });
       }
 
