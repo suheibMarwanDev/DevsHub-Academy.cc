@@ -1,9 +1,16 @@
 "use strict";
 
+const {
+  databaseConfig,
+  listDatabaseCertificates,
+  getDatabaseCertificate,
+  upsertDatabaseCertificate,
+} = require("./database");
+
 const STORAGE_KEY = "devshub:certificates:v2";
 const LEGACY_STORAGE_KEY = "devshub:certificates";
 
-function storageConfig() {
+function redisConfig() {
   const url =
     process.env.UPSTASH_REDIS_REST_URL ||
     process.env.KV_REST_API_URL ||
@@ -20,8 +27,32 @@ function storageConfig() {
   };
 }
 
+function storageConfig() {
+  const database = databaseConfig();
+  const redis = redisConfig();
+
+  if (database.configured) {
+    return {
+      configured: true,
+      provider: "postgresql",
+    };
+  }
+
+  if (redis.configured) {
+    return {
+      configured: true,
+      provider: "redis",
+    };
+  }
+
+  return {
+    configured: false,
+    provider: "demo",
+  };
+}
+
 async function redisCommand(command) {
-  const config = storageConfig();
+  const config = redisConfig();
   if (!config.configured) {
     const error = new Error("Cloud storage is not configured");
     error.code = "STORAGE_NOT_CONFIGURED";
@@ -92,7 +123,7 @@ async function readLegacyCertificates() {
   }
 }
 
-async function listCertificates() {
+async function listRedisCertificates() {
   let certificates = [];
 
   try {
@@ -108,14 +139,15 @@ async function listCertificates() {
   if (legacy.length) {
     for (const certificate of legacy) {
       if (certificate?.serial) {
-        await upsertCertificate(certificate).catch(() => {});
+        await upsertRedisCertificate(certificate).catch(() => {});
       }
     }
   }
+
   return legacy;
 }
 
-async function getCertificate(serial) {
+async function getRedisCertificate(serial) {
   const normalized = String(serial || "").trim().toUpperCase();
   if (!normalized) return null;
 
@@ -135,7 +167,7 @@ async function getCertificate(serial) {
   );
 }
 
-async function upsertCertificate(certificate) {
+async function upsertRedisCertificate(certificate) {
   await redisCommand([
     "HSET",
     STORAGE_KEY,
@@ -143,6 +175,30 @@ async function upsertCertificate(certificate) {
     JSON.stringify(certificate),
   ]);
   return certificate;
+}
+
+async function listCertificates() {
+  if (databaseConfig().configured) {
+    return listDatabaseCertificates();
+  }
+
+  return listRedisCertificates();
+}
+
+async function getCertificate(serial) {
+  if (databaseConfig().configured) {
+    return getDatabaseCertificate(serial);
+  }
+
+  return getRedisCertificate(serial);
+}
+
+async function upsertCertificate(certificate) {
+  if (databaseConfig().configured) {
+    return upsertDatabaseCertificate(certificate);
+  }
+
+  return upsertRedisCertificate(certificate);
 }
 
 module.exports = {
