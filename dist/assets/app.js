@@ -571,8 +571,13 @@ const base = [
         document
           .querySelectorAll(".view,.role")
           .forEach((x) => x.classList.remove("active"));
-        $("#" + v).classList.add("active");
-        document.querySelector(`[data-v="${v}"]`)?.classList.add("active");
+
+        $("#" + v)?.classList.add("active");
+
+        document
+          .querySelectorAll(`[data-v="${v}"]`)
+          .forEach((button) => button.classList.add("active"));
+
         document.body.dataset.view = v;
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
@@ -853,15 +858,29 @@ const base = [
         }
       }
 
-      $('.role[data-v="home"]').onclick = () => {
-        location.hash = "";
-        show("home");
-      };
-      $('.role[data-v="verify"]').onclick = () => {
-        location.hash = "verify";
-        show("verify");
-      };
-      $('.role[data-v="admin"]').onclick = enterAdmin;
+      document
+        .querySelectorAll('.role[data-v="home"]')
+        .forEach((button) => {
+          button.onclick = () => {
+            location.hash = "";
+            show("home");
+          };
+        });
+
+      document
+        .querySelectorAll('.role[data-v="verify"]')
+        .forEach((button) => {
+          button.onclick = () => {
+            location.hash = "verify";
+            show("verify");
+          };
+        });
+
+      document
+        .querySelectorAll('.role[data-v="admin"]')
+        .forEach((button) => {
+          button.onclick = enterAdmin;
+        });
       $("#homeVerifyBtn").onclick = () => {
         location.hash = "verify";
         show("verify");
