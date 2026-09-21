@@ -42,6 +42,15 @@ async function generateUniqueSerial(prefix) {
 
   for (let attempt = 0; attempt < 12; attempt += 1) {
     const serial = generateSerial(safePrefix);
+
+    if (!storageConfig().configured) {
+      const demoCollision = BASE_CERTIFICATES.some(
+        (item) => item.serial === serial,
+      );
+      if (!demoCollision) return serial;
+      continue;
+    }
+
     const existing = await getCertificate(serial);
     if (!existing) return serial;
   }
@@ -73,7 +82,9 @@ module.exports = async function handler(req, res) {
       const serial = String(req.query?.serial || "").trim().toUpperCase();
 
       if (serial) {
-        const certificate = await getCertificate(serial);
+        const certificate = storageConfig().configured
+          ? await getCertificate(serial)
+          : null;
         const fallback =
           BASE_CERTIFICATES.find((item) => item.serial === serial) || null;
         const result = certificate || fallback;
@@ -112,14 +123,33 @@ module.exports = async function handler(req, res) {
         return json(res, 400, { error: "Invalid certificate status" });
       }
 
-      const stored = await listCertificates({
-        organizationId: organizationIdFrom(access),
-        q,
-        status,
-        limit,
-      });
-      const certificates =
-        stored.length || q || status ? stored : BASE_CERTIFICATES;
+      let certificates;
+
+      if (storageConfig().configured) {
+        certificates = await listCertificates({
+          organizationId: organizationIdFrom(access),
+          q,
+          status,
+          limit,
+        });
+      } else {
+        const search = q.toLowerCase();
+        certificates = BASE_CERTIFICATES.filter((certificate) => {
+          if (
+            status &&
+            String(certificate.status || "valid").toLowerCase() !== status
+          ) {
+            return false;
+          }
+
+          if (!search) return true;
+
+          return [certificate.serial, certificate.name, certificate.course]
+            .join(" ")
+            .toLowerCase()
+            .includes(search);
+        }).slice(0, limit);
+      }
 
       return json(res, 200, {
         certificates,
@@ -213,24 +243,24 @@ module.exports = async function handler(req, res) {
         return json(res, 400, { error: "No valid certificate updates supplied" });
       }
 
-      const current = await getCertificate(serial, {
-        organizationId: organizationIdFrom(access),
-      });
-
-      if (!current) {
-        return json(res, 404, { error: "Certificate not found" });
-      }
-
       if (!storageConfig().configured) {
         if (!isDemoMode()) {
           return json(res, 503, { error: "Cloud storage is not configured" });
         }
 
         return json(res, 200, {
-          certificate: { ...current, ...patch, serial: current.serial },
+          certificate: { serial, ...patch },
           storage: "demo",
           persisted: false,
         });
+      }
+
+      const current = await getCertificate(serial, {
+        organizationId: organizationIdFrom(access),
+      });
+
+      if (!current) {
+        return json(res, 404, { error: "Certificate not found" });
       }
 
       const updated = await updateCertificate(serial, patch, {
