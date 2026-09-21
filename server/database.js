@@ -73,6 +73,7 @@ function mapCertificate(row) {
 
   return {
     id: row.id,
+    organizationId: row.organization_id,
     serial: row.serial,
     name: row.student_name,
     course: row.course_name,
@@ -91,6 +92,7 @@ function mapCertificate(row) {
 function certificateSelect() {
   return [
     "id",
+    "organization_id",
     "serial",
     "student_name",
     "course_name",
@@ -196,6 +198,40 @@ async function createDatabaseCertificate(certificate, {
     : certificate;
 }
 
+async function createDatabaseCertificates(certificates, {
+  organizationId = null,
+} = {}) {
+  const orgId = organizationId || (await getDefaultOrganizationId());
+
+  const body = certificates.map((certificate) => ({
+    organization_id: orgId,
+    serial: certificate.serial,
+    student_name: certificate.name,
+    course_name: certificate.course,
+    issued_at: certificate.date,
+    expires_at: certificate.expiresAt || null,
+    status: certificate.status || "valid",
+    pdf_url: certificate.pdf || null,
+    pdf_path: certificate.pdfPath || null,
+    verification_path:
+      "/#certificate/" + encodeURIComponent(certificate.serial),
+    revoked_at:
+      certificate.status === "revoked" ? new Date().toISOString() : null,
+    revoked_reason:
+      certificate.status === "revoked"
+        ? certificate.revokedReason || null
+        : null,
+  }));
+
+  const rows = await supabaseRequest("certificates", {
+    method: "POST",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify(body),
+  });
+
+  return Array.isArray(rows) ? rows.map(mapCertificate) : [];
+}
+
 async function updateDatabaseCertificate(serial, patch, {
   organizationId = null,
 } = {}) {
@@ -268,7 +304,7 @@ async function getOrganizationById(organizationId) {
   if (!organizationId) return null;
 
   const rows = await supabaseRequest(
-    "organizations?select=id,name,slug,status,logo_path&id=eq." +
+    "organizations?select=id,name,display_name,slug,verification_slug,custom_domain,status,logo_path,primary_color,secondary_color&id=eq." +
       encodeURIComponent(organizationId) +
       "&limit=1",
   );
@@ -281,7 +317,7 @@ async function getOrganizationBySlug(slug) {
   if (!normalized) return null;
 
   const rows = await supabaseRequest(
-    "organizations?select=id,name,slug,status,logo_path&slug=eq." +
+    "organizations?select=id,name,display_name,slug,verification_slug,custom_domain,status,logo_path,primary_color,secondary_color&slug=eq." +
       encodeURIComponent(normalized) +
       "&limit=1",
   );
@@ -398,6 +434,53 @@ async function deleteCertificateTemplate(organizationId, templateId) {
   return template;
 }
 
+async function getDashboardMetrics(organizationId) {
+  if (!organizationId) {
+    return {
+      certificatesTotal: 0,
+      validCertificates: 0,
+      revokedCertificates: 0,
+      expiredCertificates: 0,
+      issuedThisMonth: 0,
+      verificationsToday: 0,
+      verifications30d: 0,
+      serialToday: 0,
+      qrToday: 0,
+      directToday: 0,
+      successfulToday: 0,
+      daily30d: [],
+    };
+  }
+
+  const payload = await supabaseRequest(
+    "rpc/get_org_dashboard_metrics",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        p_organization_id: organizationId,
+      }),
+    },
+  );
+
+  return payload || {};
+}
+
+async function consumeRateLimit(key, limit, windowSeconds) {
+  const payload = await supabaseRequest(
+    "rpc/consume_rate_limit",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        p_key: key,
+        p_limit: limit,
+        p_window_seconds: windowSeconds,
+      }),
+    },
+  );
+
+  return payload === true;
+}
+
 async function logVerification({
   certificateId = null,
   serial,
@@ -456,6 +539,7 @@ module.exports = {
   listDatabaseCertificates,
   getDatabaseCertificate,
   createDatabaseCertificate,
+  createDatabaseCertificates,
   updateDatabaseCertificate,
   upsertDatabaseCertificate,
   getOrganizationById,
@@ -465,6 +549,8 @@ module.exports = {
   createCertificateTemplate,
   setActiveCertificateTemplate,
   deleteCertificateTemplate,
+  getDashboardMetrics,
+  consumeRateLimit,
   logVerification,
   logAudit,
 };
