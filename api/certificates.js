@@ -1,132 +1,101 @@
-const BASE_CERTIFICATES = [
-  {
-    serial: "DVH-2026-78421",
-    name: "Ahmed Ali",
-    course: "Web Development Essentials",
-    date: "12 Sep 2026",
-  },
-];
+"use strict";
 
-const STORAGE_KEY = "devshub:certificates";
+const {
+  storageConfig,
+  listCertificates,
+  getCertificate,
+  upsertCertificate,
+} = require("./lib/storage");
+const {
+  BASE_CERTIFICATES,
+  normalizeCertificate,
+  parseRequestBody,
+  isDemoMode,
+  canWrite,
+} = require("./lib/certificates");
 
 function json(res, status, body) {
   res.statusCode = status;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Cache-Control", "no-store");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Referrer-Policy", "same-origin");
   res.end(JSON.stringify(body));
-}
-
-function storageConfig() {
-  const url =
-    process.env.UPSTASH_REDIS_REST_URL ||
-    process.env.KV_REST_API_URL ||
-    "";
-  const token =
-    process.env.UPSTASH_REDIS_REST_TOKEN ||
-    process.env.KV_REST_API_TOKEN ||
-    "";
-  return { url: url.replace(/\/$/, ""), token };
-}
-
-async function redisCommand(command) {
-  const { url, token } = storageConfig();
-  if (!url || !token) {
-    const error = new Error("Cloud storage is not configured");
-    error.code = "STORAGE_NOT_CONFIGURED";
-    throw error;
-  }
-
-  const response = await fetch(url + "/pipeline", {
-    method: "POST",
-    headers: {
-      Authorization: "Bearer " + token,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify([command]),
-  });
-
-  if (!response.ok) {
-    throw new Error("Cloud storage request failed");
-  }
-
-  const data = await response.json();
-  return data?.[0]?.result;
-}
-
-async function readCertificates() {
-  const raw = await redisCommand(["GET", STORAGE_KEY]);
-  if (!raw) return BASE_CERTIFICATES;
-  try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length ? parsed : BASE_CERTIFICATES;
-  } catch {
-    return BASE_CERTIFICATES;
-  }
-}
-
-async function writeCertificates(certificates) {
-  await redisCommand(["SET", STORAGE_KEY, JSON.stringify(certificates)]);
-}
-
-function normalizeCertificate(input) {
-  if (!input || typeof input !== "object") return null;
-  const serial = String(input.serial || "").trim().toUpperCase();
-  const name = String(input.name || "").trim();
-  const course = String(input.course || "").trim();
-  const date = String(input.date || "").trim();
-
-  if (!serial || !name || !course || !date) return null;
-  if (!/^[A-Z0-9-]{6,40}$/.test(serial)) return null;
-
-  return {
-    serial,
-    name: name.slice(0, 120),
-    course: course.slice(0, 160),
-    date: date.slice(0, 60),
-    ...(input.pdf && /^https?:\/\//i.test(String(input.pdf))
-      ? { pdf: String(input.pdf) }
-      : {}),
-  };
 }
 
 module.exports = async function handler(req, res) {
   try {
     if (req.method === "GET") {
-      const certificates = await readCertificates();
-      return json(res, 200, { certificates, storage: "cloud" });
+      const serial = String(req.query?.serial || "").trim().toUpperCase();
+
+      if (serial) {
+        const certificate = await getCertificate(serial);
+        const fallback =
+          BASE_CERTIFICATES.find((item) => item.serial === serial) || null;
+
+        return json(res, certificate || fallback ? 200 : 404, {
+          certificate: certificate || fallback,
+          storage: storageConfig().configured ? "cloud" : "demo",
+        });
+      }
+
+      const stored = await listCertificates();
+      const certificates = stored.length ? stored : BASE_CERTIFICATES;
+
+      return json(res, 200, {
+        certificates,
+        storage: storageConfig().configured ? "cloud" : "demo",
+        demoMode: isDemoMode(),
+      });
     }
 
     if (req.method === "POST") {
-      const cert = normalizeCertificate(req.body);
-      if (!cert) {
-        return json(res, 400, { error: "Invalid certificate payload" });
+      if (!canWrite(req)) {
+        return json(res, 401, {
+          error: "Admin authentication required",
+        });
       }
 
-      const certificates = await readCertificates();
-      const index = certificates.findIndex(
-        (item) => String(item.serial).toUpperCase() === cert.serial,
-      );
+      const cert = normalizeCertificate(parseRequestBody(req.body));
+      if (!cert) {
+        return json(res, 400, {
+          error: "Invalid certificate payload",
+        });
+      }
 
-      if (index >= 0) certificates[index] = { ...certificates[index], ...cert };
-      else certificates.unshift(cert);
+      if (!storageConfig().configured) {
+        return json(res, 503, {
+          error: "Cloud storage is not configured",
+          demoMode: true,
+          note: "The frontend will continue using its local demo fallback.",
+        });
+      }
 
-      await writeCertificates(certificates);
-      return json(res, 200, { certificate: cert, storage: "cloud" });
+      await upsertCertificate(cert);
+      return json(res, 200, {
+        certificate: cert,
+        storage: "cloud",
+      });
     }
 
     res.setHeader("Allow", "GET, POST");
     return json(res, 405, { error: "Method not allowed" });
   } catch (error) {
     if (error?.code === "STORAGE_NOT_CONFIGURED") {
+      if (req.method === "GET") {
+        return json(res, 200, {
+          certificates: BASE_CERTIFICATES,
+          storage: "demo",
+          demoMode: true,
+        });
+      }
+
       return json(res, 503, {
         error: "Cloud storage is not configured",
-        requiredEnvironment: [
-          "UPSTASH_REDIS_REST_URL",
-          "UPSTASH_REDIS_REST_TOKEN",
-        ],
       });
     }
 
+    console.error("certificate_api_error", error);
     return json(res, 500, { error: "Storage request failed" });
   }
 };
