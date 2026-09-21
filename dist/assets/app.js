@@ -13,22 +13,32 @@ const base = [
           JSON.parse(localStorage.getItem("trustpass-certs") || "null") || base,
         active;
       const $ = (s) => document.querySelector(s);
-      document.body.dataset.view = "verify";
-      function cleanPrefix() {
-        return (
-          $("#newPrefix")?.value
-            .trim()
-            .toUpperCase()
-            .replace(/[^A-Z0-9]/g, "")
-            .slice(0, 6) || "DVH"
-        );
+      document.body.dataset.view = "home";
+      function localSerialFallback() {
+        const year = new Date().getFullYear();
+        const random = Math.floor(10000000 + Math.random() * 90000000);
+        return "DVH-" + year + "-" + String(random);
       }
-      function proposedSerial() {
-        return cleanPrefix() + "-" + new Date().getFullYear() + "-AUTO";
+
+      async function refreshSerialSuggestion() {
+        const input = $("#newSerial");
+        if (!input) return;
+
+        try {
+          const response = await fetch(CERT_API + "?suggest=serial", {
+            cache: "no-store",
+            credentials: "same-origin",
+          });
+          const payload = await response.json().catch(() => ({}));
+          input.value =
+            response.ok && payload.serial
+              ? payload.serial
+              : localSerialFallback();
+        } catch (error) {
+          input.value = localSerialFallback();
+        }
       }
-      function refreshSerialSuggestion() {
-        $("#serialSuggestion").textContent = proposedSerial();
-      }
+
       function save() {
         localStorage.setItem("trustpass-certs", JSON.stringify(certs));
       }
@@ -153,7 +163,7 @@ const base = [
         }
 
         location.hash = "";
-        show("verify");
+        show("home");
 
         if (session.configurationRequired) {
           openLoginModal(
@@ -487,7 +497,12 @@ const base = [
 
             return (
               !q ||
-              (certificate.name + certificate.serial + certificate.course)
+              (
+                certificate.name +
+                (certificate.phone || "") +
+                certificate.serial +
+                certificate.course
+              )
                 .toLowerCase()
                 .includes(q)
             );
@@ -498,7 +513,8 @@ const base = [
 
             const values = [
               ["المتدرب", certificate.name, true],
-              ["الدورة", certificate.course, false],
+              ["رقم الموبايل", certificate.phone || "—", false],
+              ["الشهادة", certificate.course, false],
               ["السيريال", certificate.serial, false],
             ];
 
@@ -702,9 +718,9 @@ const base = [
 
         banner.classList.add("is-valid");
         icon.textContent = "✓";
-        title.textContent = "سجل الشهادة مطابق وصالح";
+        title.textContent = "تم التحقق من الشهادة";
         description.textContent =
-          "تم العثور على هذا الاعتماد في سجل DevsHub Academy العام.";
+          "تم العثور على هذه الشهادة في السجل الرسمي وهي صالحة.";
         pill.textContent = "VALID";
         pill.classList.add("status-valid");
         recordStatus.textContent = "✓ صالح";
@@ -837,11 +853,20 @@ const base = [
         }
       }
 
-      $('.role[data-v="verify"]').onclick = () => {
+      $('.role[data-v="home"]').onclick = () => {
         location.hash = "";
+        show("home");
+      };
+      $('.role[data-v="verify"]').onclick = () => {
+        location.hash = "verify";
         show("verify");
       };
       $('.role[data-v="admin"]').onclick = enterAdmin;
+      $("#homeVerifyBtn").onclick = () => {
+        location.hash = "verify";
+        show("verify");
+        setTimeout(() => $("#serial")?.focus(), 80);
+      };
 
       $("#loginForm").onsubmit = async (event) => {
         event.preventDefault();
@@ -905,7 +930,7 @@ const base = [
       $("#closeLogin").onclick = () => {
         closeLoginModal();
         location.hash = "";
-        show("verify");
+        show("home");
       };
 
       $("#orgSwitcher").onchange = async (event) => {
@@ -966,12 +991,7 @@ const base = [
         dashboardMetrics = null;
         updateAuthUi();
         location.hash = "";
-        show("verify");
-      };
-
-      $("#demoSerialBtn").onclick = () => {
-        $("#serial").value = "DVH-2026-78421";
-        $("#serial").focus();
+        show("home");
       };
 
       $("#verifyBtn").onclick = () => verifySerial($("#serial").value);
@@ -982,17 +1002,19 @@ const base = [
         }
       };
       $("#backBtn").onclick = () => {
-        location.hash = "";
+        location.hash = "verify";
         show("verify");
       };
       $("#search").oninput = render;
       $("#statusFilter").onchange = render;
-      $("#addOpen").onclick = () => {
-        refreshSerialSuggestion();
+      $("#addOpen").onclick = async () => {
+        $("#newDate").value =
+          $("#newDate").value || new Date().toISOString().slice(0, 10);
         $("#addModal").classList.add("show");
+        await refreshSerialSuggestion();
       };
+      $("#regenerateSerial").onclick = refreshSerialSuggestion;
       $("#cancelAdd").onclick = () => $("#addModal").classList.remove("show");
-      $("#newPrefix").oninput = refreshSerialSuggestion;
       function closeAdminTool() {
         $("#adminToolModal").classList.remove("show");
       }
@@ -1811,67 +1833,81 @@ const base = [
       $("#closeAdminTool").onclick = closeAdminTool;
       $("#saveCert").onclick = async () => {
         const name = $("#newName").value.trim();
+        const phone = $("#newPhone").value.trim();
         const course = $("#newCourse").value.trim();
-        const expiresAt = $("#newExpiresAt").value || null;
-        const prefix = cleanPrefix();
+        const date = $("#newDate").value;
+        const serial = $("#newSerial").value.trim().toUpperCase();
         const button = $("#saveCert");
+        const pdfFile = $("#newPdf").files[0];
 
-        if (!name || !course) {
-          alert("اكتب اسم المتدرب والدورة");
+        if (!name || !phone || !course || !date || !serial) {
+          alert("أكمل الاسم، رقم الموبايل، اسم الشهادة، التاريخ والسيريال.");
           return;
         }
 
-        let localPdf;
-        const pdfFile = $("#newPdf").files[0];
-
-        if (pdfFile) {
-          if (
-            pdfFile.type !== "application/pdf" ||
-            pdfFile.size > 2500000
-          ) {
-            alert("اختر ملف PDF صالحاً وأصغر من 2.5MB.");
-            return;
-          }
-
-          localPdf = await fileToDataUrl(pdfFile);
+        if (!/^[A-Z0-9-]{6,40}$/.test(serial)) {
+          alert("صيغة Serial Number غير صحيحة. استخدم أحرف إنكليزية وأرقام وشرطات فقط.");
+          return;
         }
 
+        if (!pdfFile) {
+          alert("ارفع ملف PDF الخاص بالشهادة.");
+          return;
+        }
+
+        if (
+          pdfFile.type !== "application/pdf" ||
+          pdfFile.size > 2500000
+        ) {
+          alert("اختر ملف PDF صالحاً وأصغر من 2.5MB.");
+          return;
+        }
+
+        const duplicateLocal = certs.some(
+          (item) => item.serial?.toUpperCase() === serial,
+        );
+        if (duplicateLocal) {
+          alert("هذا Serial Number مستخدم مسبقاً. اختر رقماً آخر.");
+          return;
+        }
+
+        const localPdf = await fileToDataUrl(pdfFile);
+
         button.disabled = true;
-        button.textContent = "جاري إصدار الشهادة…";
+        button.textContent = "جاري حفظ الشهادة…";
 
         try {
           const issued = await issueCertificateRemote({
             name,
+            phone,
             course,
-            prefix,
-            date: new Date().toISOString().slice(0, 10),
-            expiresAt,
+            serial,
+            date,
             status: "valid",
           });
 
-          let certificate = { ...issued };
+          let certificate = { ...issued, phone };
           let pdfUploadWarning = "";
 
-          if (localPdf) {
-            if (storageProvider === "postgresql") {
-              try {
-                const uploaded = await uploadStorageAsset(
-                  "certificate",
-                  pdfFile,
-                  { serial: issued.serial },
-                );
-                certificate = {
-                  ...certificate,
-                  ...(uploaded.certificate || {}),
-                };
-              } catch (error) {
-                pdfUploadWarning =
-                  " تم إصدار الشهادة، لكن تعذر رفع ملف PDF: " +
-                  error.message;
-              }
-            } else {
-              certificate.pdf = localPdf;
+          if (storageProvider === "postgresql") {
+            try {
+              const uploaded = await uploadStorageAsset(
+                "certificate",
+                pdfFile,
+                { serial: issued.serial },
+              );
+              certificate = {
+                ...certificate,
+                ...(uploaded.certificate || {}),
+                phone,
+              };
+            } catch (error) {
+              pdfUploadWarning =
+                " تم حفظ السجل، لكن تعذر رفع ملف PDF: " +
+                error.message;
             }
+          } else {
+            certificate.pdf = localPdf;
           }
 
           const existing = certs.findIndex(
@@ -1886,21 +1922,26 @@ const base = [
 
           $("#addModal").classList.remove("show");
           $("#newName").value = "";
-          $("#newCourse").value = "";
-          $("#newExpiresAt").value = "";
+          $("#newPhone").value = "";
+          $("#newDate").value = new Date().toISOString().slice(0, 10);
           $("#newPdf").value = "";
-          refreshSerialSuggestion();
+          await refreshSerialSuggestion();
 
           alert(
-            "تم إنشاء الشهادة بنجاح. كود التحقق: " +
+            "تم حفظ الشهادة بنجاح. Serial Number: " +
               certificate.serial +
               pdfUploadWarning,
           );
         } catch (error) {
-          alert(error.message || "تعذر إصدار الشهادة.");
+          const message = String(error.message || "");
+          alert(
+            message.includes("already in use")
+              ? "هذا Serial Number مستخدم مسبقاً. اختر رقماً آخر."
+              : message || "تعذر إصدار الشهادة.",
+          );
         } finally {
           button.disabled = false;
-          button.textContent = "حفظ وإنشاء سيريال";
+          button.textContent = "حفظ الشهادة";
         }
       };
       $("#closeResult").onclick = () =>
@@ -2116,6 +2157,7 @@ const base = [
 
       async function initializeApp() {
         const hash = location.hash.split("/");
+
         if (hash[0] === "#certificate" && hash[1]) {
           const serial = decodeURIComponent(hash[1]);
           let certificate = null;
@@ -2129,13 +2171,24 @@ const base = [
           }
 
           if (certificate) showCert(certificate);
-          else show("verify");
+          else {
+            location.hash = "verify";
+            show("verify");
+          }
           return;
         }
 
         if (location.hash === "#admin") {
           await enterAdmin();
+          return;
         }
+
+        if (location.hash === "#verify") {
+          show("verify");
+          return;
+        }
+
+        show("home");
       }
 
       initializeApp();

@@ -42,10 +42,18 @@ function json(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
-function clientCertificate(certificate, issuer = null) {
+function clientCertificate(
+  certificate,
+  issuer = null,
+  { includePrivate = false } = {},
+) {
   if (!certificate) return null;
 
-  const { pdfPath, ...client } = certificate;
+  const { pdfPath, metadata, phone, ...client } = certificate;
+
+  if (includePrivate) {
+    client.phone = phone || metadata?.phone || "";
+  }
 
   if (pdfPath) {
     client.pdf =
@@ -198,6 +206,14 @@ module.exports = async function handler(req, res) {
         });
       }
 
+      if (String(req.query?.suggest || "").toLowerCase() === "serial") {
+        const serial = await generateUniqueSerial(req.query?.prefix || "DVH");
+        return json(res, 200, {
+          serial,
+          storage: storageConfig().provider,
+        });
+      }
+
       if (String(req.query?.report || "").toLowerCase() === "dashboard") {
         if (databaseConfig().configured) {
           const metrics = await getDashboardMetrics(
@@ -270,7 +286,9 @@ module.exports = async function handler(req, res) {
       }
 
       return json(res, 200, {
-        certificates: certificates.map(clientCertificate),
+        certificates: certificates.map((certificate) =>
+          clientCertificate(certificate, null, { includePrivate: true }),
+        ),
         count: certificates.length,
         filters: { q, status: status || null, limit },
         storage: storageConfig().provider,
@@ -376,7 +394,9 @@ module.exports = async function handler(req, res) {
         }
 
         return json(res, 201, {
-          certificates: created.map(clientCertificate),
+          certificates: created.map((certificate) =>
+            clientCertificate(certificate, null, { includePrivate: true }),
+          ),
           count: created.length,
           storage: storageConfig().provider,
           persisted: true,
@@ -389,7 +409,22 @@ module.exports = async function handler(req, res) {
         return json(res, 400, { error: "Invalid certificate payload" });
       }
 
-      const serial = await generateUniqueSerial(body.prefix);
+      let serial = normalized.serial || "";
+
+      if (serial) {
+        const existing = storageConfig().configured
+          ? await getCertificate(serial)
+          : BASE_CERTIFICATES.find((item) => item.serial === serial) || null;
+
+        if (existing) {
+          return json(res, 409, {
+            error: "Serial number is already in use",
+          });
+        }
+      } else {
+        serial = await generateUniqueSerial(body.prefix);
+      }
+
       const certificate = {
         ...normalized,
         serial,
@@ -417,7 +452,7 @@ module.exports = async function handler(req, res) {
       });
 
       return json(res, 201, {
-        certificate: clientCertificate(created),
+        certificate: clientCertificate(created, null, { includePrivate: true }),
         storage: storageConfig().provider,
         persisted: true,
       });
@@ -494,7 +529,7 @@ module.exports = async function handler(req, res) {
       });
 
       return json(res, 200, {
-        certificate: clientCertificate(updated),
+        certificate: clientCertificate(updated, null, { includePrivate: true }),
         storage: storageConfig().provider,
         persisted: true,
       });

@@ -40,6 +40,14 @@ function normalizeStatus(value, fallback = "valid") {
   return VALID_STATUSES.has(status) ? status : fallback;
 }
 
+function normalizePhone(value) {
+  return String(value || "")
+    .trim()
+    .replace(/[^0-9+()\-\s]/g, "")
+    .replace(/\s+/g, " ")
+    .slice(0, 30);
+}
+
 function generateSerial(prefix = "DVH", now = new Date()) {
   const safePrefix = normalizePrefix(prefix);
   const year = now.getUTCFullYear();
@@ -53,6 +61,7 @@ function normalizeCertificate(input, { requireSerial = true } = {}) {
   const serial = String(input.serial || "").trim().toUpperCase();
   const name = String(input.name || "").trim();
   const course = String(input.course || "").trim();
+  const phone = normalizePhone(input.phone);
   const date = normalizeDate(input.date, new Date().toISOString().slice(0, 10));
   const expiresAt = normalizeDate(input.expiresAt, null);
   const status = normalizeStatus(input.status);
@@ -65,6 +74,7 @@ function normalizeCertificate(input, { requireSerial = true } = {}) {
     ...(serial ? { serial } : {}),
     name: name.slice(0, 120),
     course: course.slice(0, 160),
+    ...(phone ? { phone } : {}),
     date,
     status,
     ...(expiresAt ? { expiresAt } : {}),
@@ -96,6 +106,10 @@ function normalizeCertificatePatch(input) {
     const value = String(input.course || "").trim();
     if (!value) return null;
     patch.course = value.slice(0, 160);
+  }
+
+  if ("phone" in input) {
+    patch.phone = normalizePhone(input.phone);
   }
 
   if ("date" in input) {

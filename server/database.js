@@ -77,6 +77,8 @@ function mapCertificate(row) {
     serial: row.serial,
     name: row.student_name,
     course: row.course_name,
+    phone: String(row.metadata?.phone || ""),
+    metadata: row.metadata || {},
     date: row.issued_at,
     status: row.status || "valid",
     ...(row.pdf_url ? { pdf: row.pdf_url } : {}),
@@ -96,6 +98,7 @@ function certificateSelect() {
     "serial",
     "student_name",
     "course_name",
+    "metadata",
     "issued_at",
     "expires_at",
     "status",
@@ -172,6 +175,10 @@ async function createDatabaseCertificate(certificate, {
     serial: certificate.serial,
     student_name: certificate.name,
     course_name: certificate.course,
+    metadata: {
+      ...(certificate.metadata || {}),
+      ...(certificate.phone ? { phone: certificate.phone } : {}),
+    },
     issued_at: certificate.date,
     expires_at: certificate.expiresAt || null,
     status: certificate.status || "valid",
@@ -208,6 +215,10 @@ async function createDatabaseCertificates(certificates, {
     serial: certificate.serial,
     student_name: certificate.name,
     course_name: certificate.course,
+    metadata: {
+      ...(certificate.metadata || {}),
+      ...(certificate.phone ? { phone: certificate.phone } : {}),
+    },
     issued_at: certificate.date,
     expires_at: certificate.expiresAt || null,
     status: certificate.status || "valid",
@@ -242,6 +253,15 @@ async function updateDatabaseCertificate(serial, patch, {
 
   if ("name" in patch) body.student_name = patch.name;
   if ("course" in patch) body.course_name = patch.course;
+  if ("phone" in patch) {
+    const existingForMetadata = await getDatabaseCertificate(normalized, {
+      organizationId,
+    });
+    body.metadata = {
+      ...(existingForMetadata?.metadata || {}),
+      phone: patch.phone || null,
+    };
+  }
   if ("date" in patch) body.issued_at = patch.date;
   if ("expiresAt" in patch) body.expires_at = patch.expiresAt;
   if ("pdf" in patch) body.pdf_url = patch.pdf;
@@ -283,6 +303,7 @@ async function upsertDatabaseCertificate(certificate, options = {}) {
     {
       name: certificate.name,
       course: certificate.course,
+      ...(certificate.phone !== undefined ? { phone: certificate.phone } : {}),
       date: certificate.date,
       status: certificate.status,
       ...(certificate.expiresAt !== undefined
