@@ -245,7 +245,15 @@
               <div class="box">
                 <div class="toolbar">
                   <h3 id="certificateTableTitle">آخر الشهادات الصادرة</h3>
-                  <input class="search" id="search" placeholder="ابحث بالاسم أو السيريال" />
+                  <div class="certificate-filters">
+                    <select id="statusFilter" aria-label="فلترة حسب الحالة">
+                      <option value="">كل الحالات</option>
+                      <option value="valid">صالحة</option>
+                      <option value="revoked">ملغاة</option>
+                      <option value="expired">منتهية</option>
+                    </select>
+                    <input class="search" id="search" placeholder="ابحث بالاسم أو السيريال" />
+                  </div>
                 </div>
                 <table class="table">
                   <thead><tr><th>المتدرب</th><th>الدورة</th><th>السيريال</th><th>الحالة</th><th></th></tr></thead>
@@ -425,13 +433,17 @@
           ><input id="newPrefix" value="DVH" maxlength="6" placeholder="مثال: DVH" />
         </div>
         <div class="field">
-          <label>كود التحقق المقترح</label>
-          <code class="serial" id="serialSuggestion">DVH-2026-78002</code>
+          <label>صيغة كود التحقق</label>
+          <code class="serial" id="serialSuggestion">DVH-2026-AUTO</code>
+        </div>
+        <div class="field">
+          <label>تاريخ انتهاء الشهادة (اختياري)</label>
+          <input id="newExpiresAt" type="date" />
         </div>
         <div class="field">
           <label>ملف الشهادة PDF (اختياري)</label
           ><input id="newPdf" type="file" accept="application/pdf" />
-          <p class="field-help">يرتبط الملف بهذه الشهادة ويظهر كمعاينة بعد التحقق.</p>
+          <p class="field-help">سيتم ربط التخزين السحابي للملفات في الخطوة التالية. حالياً يبقى الملف معاينة محلية عند استخدام Demo Mode.</p>
         </div>
         <div class="dialog-actions">
           <button class="primary" id="saveCert" style="min-height: 43px">
