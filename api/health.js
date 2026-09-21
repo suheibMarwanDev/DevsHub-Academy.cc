@@ -1,6 +1,7 @@
 "use strict";
 
 const { storageConfig } = require("./lib/storage");
+const { authConfig, isDemoMode } = require("./lib/auth");
 
 module.exports = async function handler(req, res) {
   if (req.method !== "GET") {
@@ -10,6 +11,7 @@ module.exports = async function handler(req, res) {
   }
 
   const storage = storageConfig();
+  const auth = authConfig();
 
   res.statusCode = 200;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -21,8 +23,8 @@ module.exports = async function handler(req, res) {
       service: "devshub-academy",
       storageConfigured: storage.configured,
       storageProvider: storage.provider,
-      demoMode:
-        String(process.env.DEMO_MODE || "true").toLowerCase() !== "false",
+      authenticationConfigured: auth.configured,
+      demoMode: isDemoMode(),
     }),
   );
 };
