@@ -6,6 +6,7 @@ const base = [
           name: "Ahmed Ali",
           course: "Web Development Essentials",
           date: "12 Sep 2026",
+          status: "valid",
         },
       ];
       let certs =
@@ -23,7 +24,15 @@ const base = [
         );
       }
       function proposedSerial() {
-        return cleanPrefix() + "-2026-" + String(78000 + certs.length + 1);
+        const year = new Date().getFullYear();
+        let serial = "";
+        do {
+          const random = new Uint32Array(1);
+          crypto.getRandomValues(random);
+          const number = String(10000 + (random[0] % 90000));
+          serial = cleanPrefix() + "-" + year + "-" + number;
+        } while (find(serial));
+        return serial;
       }
       function refreshSerialSuggestion() {
         $("#serialSuggestion").textContent = proposedSerial();
@@ -42,6 +51,7 @@ const base = [
           name: cert.name,
           course: cert.course,
           date: cert.date,
+          status: cert.status || "valid",
           pdf: cert.pdf && !String(cert.pdf).startsWith("data:") ? cert.pdf : undefined,
         };
       }
@@ -87,23 +97,74 @@ const base = [
           cloudSyncAvailable = false;
         }
       }
-      function render() {
-        let q = $("#search").value?.toLowerCase() || "";
-        $("#rows").innerHTML = certs
-          .filter((c) =>
-            (c.name + c.serial + c.course).toLowerCase().includes(q),
-          )
-          .map(
-            (c) =>
-              `<tr><td data-label="المتدرب"><b>${c.name}</b></td><td data-label="الدورة">${c.course}</td><td data-label="السيريال" dir="ltr">${c.serial}</td><td data-label="الحالة"><span class="badge">موثّقة</span></td><td data-label="الإجراء"><button class="link" data-s="${c.serial}">عرض</button></td></tr>`,
-          )
-          .join("");
-        $("#total").textContent = certs.length;
-        $("#verified").textContent = certs.length;
-        document
-          .querySelectorAll("[data-s]")
-          .forEach((b) => (b.onclick = () => showCert(find(b.dataset.s))));
+      function statusMeta(status) {
+        const normalized = String(status || "valid").toLowerCase();
+        if (normalized === "revoked") {
+          return { label: "ملغاة", className: "badge badge-revoked" };
+        }
+        if (normalized === "expired") {
+          return { label: "منتهية", className: "badge badge-expired" };
+        }
+        return { label: "موثّقة", className: "badge" };
       }
+
+      function render() {
+        const q = $("#search").value?.toLowerCase() || "";
+        const rows = $("#rows");
+        rows.replaceChildren();
+
+        certs
+          .filter((certificate) =>
+            (certificate.name + certificate.serial + certificate.course)
+              .toLowerCase()
+              .includes(q),
+          )
+          .forEach((certificate) => {
+            const tr = document.createElement("tr");
+            const meta = statusMeta(certificate.status);
+
+            const values = [
+              ["المتدرب", certificate.name, true],
+              ["الدورة", certificate.course, false],
+              ["السيريال", certificate.serial, false],
+            ];
+
+            values.forEach(([label, value, strong]) => {
+              const td = document.createElement("td");
+              td.dataset.label = label;
+              if (label === "السيريال") td.dir = "ltr";
+              const node = document.createElement(strong ? "b" : "span");
+              node.textContent = value;
+              td.appendChild(node);
+              tr.appendChild(td);
+            });
+
+            const statusTd = document.createElement("td");
+            statusTd.dataset.label = "الحالة";
+            const badge = document.createElement("span");
+            badge.className = meta.className;
+            badge.textContent = meta.label;
+            statusTd.appendChild(badge);
+            tr.appendChild(statusTd);
+
+            const actionTd = document.createElement("td");
+            actionTd.dataset.label = "الإجراء";
+            const button = document.createElement("button");
+            button.className = "link";
+            button.textContent = "عرض";
+            button.onclick = () => showCert(certificate);
+            actionTd.appendChild(button);
+            tr.appendChild(actionTd);
+
+            rows.appendChild(tr);
+          });
+
+        $("#total").textContent = certs.length;
+        $("#verified").textContent = certs.filter(
+          (certificate) => (certificate.status || "valid") === "valid",
+        ).length;
+      }
+
       function find(s) {
         return certs.find((c) => c.serial === s.trim().toUpperCase());
       }
@@ -151,28 +212,143 @@ const base = [
         $("#pdfPreview").style.display = "none";
         $("#generatedPdfPreview").style.display = "grid";
       }
+      function applyPublicStatus(certificate) {
+        const status = String(certificate.status || "valid").toLowerCase();
+        const banner = $("#statusBanner");
+        const icon = $("#statusIcon");
+        const title = $("#statusTitle");
+        const description = $("#statusDescription");
+        const pill = $("#statusPill");
+        const recordStatus = $("#recordStatus");
+        const recordMatch = $("#recordMatchLabel");
+
+        banner.classList.remove("is-valid", "is-revoked", "is-expired");
+        pill.classList.remove("status-valid", "status-revoked", "status-expired");
+
+        if (status === "revoked") {
+          banner.classList.add("is-revoked");
+          icon.textContent = "!";
+          title.textContent = "تم إلغاء هذا الاعتماد";
+          description.textContent =
+            "السجل موجود في DevsHub Academy، لكن حالة الاعتماد الحالية هي ملغاة.";
+          pill.textContent = "REVOKED";
+          pill.classList.add("status-revoked");
+          recordStatus.textContent = "× ملغاة";
+          recordStatus.className = "record-valid record-revoked";
+          recordMatch.textContent = "Record found";
+          return;
+        }
+
+        if (status === "expired") {
+          banner.classList.add("is-expired");
+          icon.textContent = "!";
+          title.textContent = "انتهت صلاحية هذا الاعتماد";
+          description.textContent =
+            "تم العثور على السجل، لكن حالة الاعتماد الحالية تشير إلى انتهاء الصلاحية.";
+          pill.textContent = "EXPIRED";
+          pill.classList.add("status-expired");
+          recordStatus.textContent = "! منتهية";
+          recordStatus.className = "record-valid record-expired";
+          recordMatch.textContent = "Record found";
+          return;
+        }
+
+        banner.classList.add("is-valid");
+        icon.textContent = "✓";
+        title.textContent = "سجل الشهادة مطابق وصالح";
+        description.textContent =
+          "تم العثور على هذا الاعتماد في سجل DevsHub Academy العام.";
+        pill.textContent = "VALID";
+        pill.classList.add("status-valid");
+        recordStatus.textContent = "✓ صالح";
+        recordStatus.className = "record-valid";
+        recordMatch.textContent = "Matched";
+      }
+
       function showCert(c) {
         if (!c) {
           $("#badSerial").textContent = $("#serial").value || "لا يوجد سيريال";
           $("#resultModal").classList.add("show");
           return;
         }
+
         active = c;
         $("#certName").textContent = c.name;
         $("#certCourse").textContent = c.course;
         $("#certSerial").textContent = c.serial;
         $("#certDate").textContent = c.date;
+        $("#recordIdentity").textContent = c.serial;
+        applyPublicStatus(c);
         loadPdfPreview(c);
-        location.hash = "certificate/" + c.serial;
+        location.hash = "certificate/" + encodeURIComponent(c.serial);
         show("certificate");
       }
+
+      function setVerifyLoading(loading) {
+        const button = $("#verifyBtn");
+        button.disabled = loading;
+        button.classList.toggle("is-loading", loading);
+        button.innerHTML = loading
+          ? 'جاري مطابقة السجل <span>•••</span>'
+          : 'تحقق من السجل <span>↗</span>';
+      }
+
+      async function fetchCertificateBySerial(serial) {
+        try {
+          const response = await fetch(
+            CERT_API + "?serial=" + encodeURIComponent(serial),
+            { cache: "no-store" },
+          );
+          if (response.status === 404) return null;
+          if (!response.ok) throw new Error("verification request failed");
+          const payload = await response.json();
+          return payload.certificate || null;
+        } catch (error) {
+          return null;
+        }
+      }
+
+      async function verifySerial(value) {
+        const serial = String(value || "").trim().toUpperCase();
+        if (!serial) {
+          $("#badSerial").textContent = "اكتب الرقم التسلسلي أولاً";
+          $("#resultModal").classList.add("show");
+          return false;
+        }
+
+        $("#serial").value = serial;
+        setVerifyLoading(true);
+
+        try {
+          let certificate = find(serial);
+          if (!certificate) certificate = await fetchCertificateBySerial(serial);
+
+          if (certificate) {
+            const existing = certs.findIndex(
+              (item) => item.serial?.toUpperCase() === certificate.serial?.toUpperCase(),
+            );
+            if (existing >= 0) certs[existing] = { ...certs[existing], ...certificate };
+            else certs.unshift(certificate);
+            showCert(certificate);
+            return true;
+          }
+
+          $("#badSerial").textContent = serial;
+          $("#resultModal").classList.add("show");
+          return false;
+        } finally {
+          setVerifyLoading(false);
+        }
+      }
+
       $('.role[data-v="verify"]').onclick = () => {
         location.hash = "";
         show("verify");
       };
-      $('.role[data-v="admin"]').onclick = () => {
+      $('.role[data-v="admin"]').onclick = async () => {
         location.hash = "admin";
         show("admin");
+        await hydrateRemoteCerts();
       };
 
       $("#demoSerialBtn").onclick = () => {
@@ -180,11 +356,11 @@ const base = [
         $("#serial").focus();
       };
 
-      $("#verifyBtn").onclick = () => showCert(find($("#serial").value));
+      $("#verifyBtn").onclick = () => verifySerial($("#serial").value);
       $("#serial").onkeydown = (e) => {
         if (e.key === "Enter") {
           e.preventDefault();
-          showCert(find(e.target.value));
+          verifySerial(e.target.value);
         }
       };
       $("#backBtn").onclick = () => {
@@ -331,13 +507,12 @@ const base = [
         $("#cameraModal").classList.remove("show");
       }
 
-      function handleDecodedQr(raw) {
+      async function handleDecodedQr(raw) {
         const serial = extractSerialFromQr(raw);
         if (!serial) return false;
         $("#serial").value = serial;
-        const cert = find(serial);
         stopCameraScanner();
-        showCert(cert);
+        await verifySerial(serial);
         return true;
       }
 
@@ -362,7 +537,10 @@ const base = [
           canvas.height = Math.max(1, Math.round(video.videoHeight * scale));
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
           const raw = decodeQrFromCanvas(canvas, ctx);
-          if (raw && handleDecodedQr(raw)) return;
+          if (raw) {
+            handleDecodedQr(raw);
+            return;
+          }
         }
         qrScanFrame = requestAnimationFrame(scanCameraFrame);
       }
@@ -437,10 +615,12 @@ const base = [
         if (!file) return;
         const raw = await decodeQrImageFile(file);
         event.target.value = "";
-        if (!raw || !handleDecodedQr(raw)) {
+        if (!raw) {
           $("#badSerial").textContent = "لم يتم العثور على QR صالح في الصورة";
           $("#resultModal").classList.add("show");
+          return;
         }
+        await handleDecodedQr(raw);
       };
 
       function certificatePdfBlobUrl(cert) {
@@ -484,7 +664,25 @@ const base = [
         buildCertificatePdf(active).save("DevsHub-" + active.serial + ".pdf");
       };
       render();
-      hydrateRemoteCerts();
-      let hash = location.hash.split("/");
-      if (hash[0] === "#certificate" && find(hash[1])) showCert(find(hash[1]));
-      else if (location.hash === "#admin") show("admin");
+
+      async function initializeApp() {
+        const hash = location.hash.split("/");
+        if (hash[0] === "#certificate" && hash[1]) {
+          const serial = decodeURIComponent(hash[1]);
+          const local = find(serial);
+          if (local) showCert(local);
+          else {
+            const remote = await fetchCertificateBySerial(serial);
+            if (remote) showCert(remote);
+            else show("verify");
+          }
+          return;
+        }
+
+        if (location.hash === "#admin") {
+          show("admin");
+          await hydrateRemoteCerts();
+        }
+      }
+
+      initializeApp();
