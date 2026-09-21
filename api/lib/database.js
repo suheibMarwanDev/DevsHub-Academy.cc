@@ -38,7 +38,10 @@ async function supabaseRequest(path, options = {}) {
     const error = new Error(
       "Supabase request failed: " + response.status + " " + body,
     );
-    error.code = "DATABASE_REQUEST_FAILED";
+    error.status = response.status;
+    error.body = body;
+    error.code =
+      response.status === 409 ? "DATABASE_CONFLICT" : "DATABASE_REQUEST_FAILED";
     throw error;
   }
 
@@ -77,59 +80,181 @@ function mapCertificate(row) {
     status: row.status || "valid",
     ...(row.pdf_url ? { pdf: row.pdf_url } : {}),
     ...(row.expires_at ? { expiresAt: row.expires_at } : {}),
+    ...(row.revoked_reason ? { revokedReason: row.revoked_reason } : {}),
+    ...(row.revoked_at ? { revokedAt: row.revoked_at } : {}),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
-async function listDatabaseCertificates() {
-  const rows = await supabaseRequest(
-    "certificates?select=id,serial,student_name,course_name,issued_at,expires_at,status,pdf_url&order=created_at.desc",
-  );
+function certificateSelect() {
+  return [
+    "id",
+    "serial",
+    "student_name",
+    "course_name",
+    "issued_at",
+    "expires_at",
+    "status",
+    "pdf_url",
+    "revoked_at",
+    "revoked_reason",
+    "created_at",
+    "updated_at",
+  ].join(",");
+}
 
+async function listDatabaseCertificates({
+  organizationId = null,
+  q = "",
+  status = "",
+  limit = 100,
+} = {}) {
+  const params = new URLSearchParams();
+  params.set("select", certificateSelect());
+  params.set("order", "created_at.desc");
+  params.set("limit", String(Math.min(Math.max(Number(limit) || 100, 1), 500)));
+
+  const orgId = organizationId || (await getDefaultOrganizationId());
+  params.set("organization_id", "eq." + orgId);
+
+  if (status) params.set("status", "eq." + status);
+
+  const search = String(q || "").trim();
+  if (search) {
+    const safe = search.replace(/[,%()]/g, " ").trim();
+    if (safe) {
+      params.set(
+        "or",
+        "(serial.ilike.*" +
+          safe +
+          "*,student_name.ilike.*" +
+          safe +
+          "*,course_name.ilike.*" +
+          safe +
+          "*)",
+      );
+    }
+  }
+
+  const rows = await supabaseRequest("certificates?" + params.toString());
   return Array.isArray(rows) ? rows.map(mapCertificate) : [];
 }
 
-async function getDatabaseCertificate(serial) {
+async function getDatabaseCertificate(serial, { organizationId = null } = {}) {
   const normalized = String(serial || "").trim().toUpperCase();
   if (!normalized) return null;
 
-  const rows = await supabaseRequest(
-    "certificates?select=id,serial,student_name,course_name,issued_at,expires_at,status,pdf_url&serial=eq." +
-      encodeURIComponent(normalized) +
-      "&limit=1",
-  );
+  const params = new URLSearchParams();
+  params.set("select", certificateSelect());
+  params.set("serial", "eq." + normalized);
+  params.set("limit", "1");
 
+  if (organizationId) {
+    params.set("organization_id", "eq." + organizationId);
+  }
+
+  const rows = await supabaseRequest("certificates?" + params.toString());
   return Array.isArray(rows) && rows[0] ? mapCertificate(rows[0]) : null;
 }
 
-async function upsertDatabaseCertificate(certificate) {
-  const organizationId = await getDefaultOrganizationId();
+async function createDatabaseCertificate(certificate, {
+  organizationId = null,
+} = {}) {
+  const orgId = organizationId || (await getDefaultOrganizationId());
 
   const body = {
-    organization_id: organizationId,
+    organization_id: orgId,
     serial: certificate.serial,
     student_name: certificate.name,
     course_name: certificate.course,
     issued_at: certificate.date,
+    expires_at: certificate.expiresAt || null,
     status: certificate.status || "valid",
     pdf_url: certificate.pdf || null,
     verification_path:
       "/#certificate/" + encodeURIComponent(certificate.serial),
+    revoked_at:
+      certificate.status === "revoked" ? new Date().toISOString() : null,
+    revoked_reason:
+      certificate.status === "revoked"
+        ? certificate.revokedReason || null
+        : null,
   };
 
-  const rows = await supabaseRequest(
-    "certificates?on_conflict=serial",
-    {
-      method: "POST",
-      headers: {
-        Prefer: "resolution=merge-duplicates,return=representation",
-      },
-      body: JSON.stringify(body),
-    },
-  );
+  const rows = await supabaseRequest("certificates", {
+    method: "POST",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify(body),
+  });
 
   return Array.isArray(rows) && rows[0]
     ? mapCertificate(rows[0])
     : certificate;
+}
+
+async function updateDatabaseCertificate(serial, patch, {
+  organizationId = null,
+} = {}) {
+  const normalized = String(serial || "").trim().toUpperCase();
+  if (!normalized) return null;
+
+  const body = {};
+
+  if ("name" in patch) body.student_name = patch.name;
+  if ("course" in patch) body.course_name = patch.course;
+  if ("date" in patch) body.issued_at = patch.date;
+  if ("expiresAt" in patch) body.expires_at = patch.expiresAt;
+  if ("pdf" in patch) body.pdf_url = patch.pdf;
+
+  if ("status" in patch) {
+    body.status = patch.status;
+
+    if (patch.status === "revoked") {
+      body.revoked_at = new Date().toISOString();
+      body.revoked_reason = patch.revokedReason || null;
+    } else {
+      body.revoked_at = null;
+      body.revoked_reason = null;
+    }
+  } else if ("revokedReason" in patch) {
+    body.revoked_reason = patch.revokedReason || null;
+  }
+
+  const params = new URLSearchParams();
+  params.set("serial", "eq." + normalized);
+  if (organizationId) params.set("organization_id", "eq." + organizationId);
+
+  const rows = await supabaseRequest("certificates?" + params.toString(), {
+    method: "PATCH",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify(body),
+  });
+
+  return Array.isArray(rows) && rows[0] ? mapCertificate(rows[0]) : null;
+}
+
+async function upsertDatabaseCertificate(certificate, options = {}) {
+  const existing = await getDatabaseCertificate(certificate.serial, options);
+  if (!existing) return createDatabaseCertificate(certificate, options);
+
+  return updateDatabaseCertificate(
+    certificate.serial,
+    {
+      name: certificate.name,
+      course: certificate.course,
+      date: certificate.date,
+      status: certificate.status,
+      ...(certificate.expiresAt !== undefined
+        ? { expiresAt: certificate.expiresAt }
+        : {}),
+      ...(certificate.pdf !== undefined ? { pdf: certificate.pdf } : {}),
+      ...(certificate.revokedReason !== undefined
+        ? { revokedReason: certificate.revokedReason }
+        : {}),
+    },
+    options,
+  );
 }
 
 async function logVerification({
@@ -158,10 +283,39 @@ async function logVerification({
   return true;
 }
 
+async function logAudit({
+  organizationId = null,
+  actorUserId = null,
+  action,
+  entityType = "certificate",
+  entityId = null,
+  details = {},
+}) {
+  const body = {
+    organization_id: organizationId,
+    actor_user_id: actorUserId,
+    action,
+    entity_type: entityType,
+    entity_id: entityId,
+    details,
+  };
+
+  await supabaseRequest("audit_logs", {
+    method: "POST",
+    headers: { Prefer: "return=minimal" },
+    body: JSON.stringify(body),
+  });
+
+  return true;
+}
+
 module.exports = {
   databaseConfig,
   listDatabaseCertificates,
   getDatabaseCertificate,
+  createDatabaseCertificate,
+  updateDatabaseCertificate,
   upsertDatabaseCertificate,
   logVerification,
+  logAudit,
 };
