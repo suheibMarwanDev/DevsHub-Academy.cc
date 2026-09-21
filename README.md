@@ -20,10 +20,13 @@ Do not hide either experience until the sales/demo phase is complete.
 │   ├── certificates.js     # Certificate API
 │   ├── health.js           # Deployment/config health endpoint
 │   ├── auth/               # Login/session/logout endpoints
-│   ├── storage/            # Private PDF/logo/template delivery
-│   └── lib/
-│       ├── certificates.js # Validation + demo-mode policy
-│       └── storage.js      # Redis/KV storage adapter
+│   └── storage/            # PDF/logo/template endpoints
+├── server/
+│   ├── auth.js             # Session + membership logic
+│   ├── certificates.js     # Validation + serial generation
+│   ├── database.js         # PostgreSQL/Supabase adapter
+│   ├── file-storage.js     # Private Supabase Storage adapter
+│   └── storage.js          # DB/Redis/demo persistence layer
 ├── scripts/
 │   ├── build.mjs           # Rebuilds dist/
 │   └── check.mjs           # Lightweight structural checks
