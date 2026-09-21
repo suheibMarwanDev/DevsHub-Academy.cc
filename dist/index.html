@@ -49,7 +49,7 @@
         <button class="brand brand-button role active" data-v="home" type="button" aria-label="DevsHub Academy home">
           <svg viewBox="0 0 80 80">
             <path d="M24 4H43C63 4 76 19 76 40S63 76 43 76H24V52H46V28H24V4Z" fill="currentColor" />
-            <path d="M3 28H24V52H3Z" fill="#0C8791" />
+            <path d="M3 28H24V52H3Z" fill="#6366F1" />
           </svg>
           <span>DevsHub <span class="academy">Academy</span><span>.cc</span></span>
         </button>
@@ -61,25 +61,68 @@
       </header>
       <main>
         <section class="view active" id="home">
-          <div class="home-page">
-            <section class="home-hero">
-              <div class="home-copy">
-                <span class="home-eyebrow">DEVSHUB ACADEMY · CERTIFICATES</span>
-                <h1>شهادات مهنية<br /><em>يمكن التحقق منها بثقة.</em></h1>
+          <div class="home-page brand-home">
+            <section class="home-hero brand-hero">
+              <div class="home-copy brand-copy">
+                <div class="home-brand-lockup" aria-label="DevsHub Academy">
+                  <span class="home-brand-mark">
+                    <svg viewBox="0 0 80 80" aria-hidden="true">
+                      <path d="M24 4H43C63 4 76 19 76 40S63 76 43 76H24V52H46V28H24V4Z" fill="currentColor" />
+                      <path d="M3 28H24V52H3Z" fill="#6366F1" />
+                    </svg>
+                  </span>
+                  <span class="home-brand-name">
+                    <b>DevsHub</b>
+                    <small>Academy · Certificate Verification</small>
+                  </span>
+                </div>
+
+                <span class="home-eyebrow">OFFICIAL DEVSHUB CERTIFICATE PLATFORM</span>
+                <h1>شهادات موثوقة.<br /><em>هوية DevsHub واضحة.</em></h1>
                 <p>
-                  مرحباً بك في DevsHub Academy. نصدر شهادات للمتدربين، وكل شهادة مرتبطة
-                  برقم تسلسلي ورمز QR يمكنك استخدامهما للتأكد من صحة الشهادة من خلال سجلنا الرسمي.
+                  منصة DevsHub Academy لإصدار الشهادات والتحقق منها. كل شهادة مرتبطة
+                  برقم تسلسلي فريد وQR رسمي حتى يستطيع صاحب العمل أو الجهة المستلمة
+                  التأكد منها خلال ثوانٍ.
                 </p>
-                <button class="home-primary" id="homeVerifyBtn" type="button">
-                  تحقق من شهادتك
-                  <span>←</span>
-                </button>
+
+                <div class="home-actions">
+                  <button class="home-primary" id="homeVerifyBtn" type="button">
+                    تحقق من شهادة
+                    <span>←</span>
+                  </button>
+                  <button class="home-secondary" id="homeAdminBtn" type="button">
+                    دخول الإدارة
+                  </button>
+                </div>
+
+                <div class="home-proof-row" aria-label="مميزات المنصة">
+                  <span><i>✓</i> Serial فريد</span>
+                  <span><i>⌁</i> QR Verification</span>
+                  <span><i>PDF</i> شهادة أصلية</span>
+                </div>
               </div>
 
-              <div class="home-visual" aria-hidden="true">
-                <div class="home-record-card">
+              <div class="home-visual brand-visual">
+                <div class="brand-orb brand-orb-one" aria-hidden="true"></div>
+                <div class="brand-orb brand-orb-two" aria-hidden="true"></div>
+                <div class="brand-grid" aria-hidden="true"></div>
+
+                <div class="brand-floating-chip chip-verified" aria-hidden="true">
+                  <i>✓</i><span><b>Verified</b><small>Official record</small></span>
+                </div>
+                <div class="brand-floating-chip chip-qr" aria-hidden="true">
+                  <i>⌁</i><span><b>QR Ready</b><small>Scan & verify</small></span>
+                </div>
+
+                <div class="home-record-card brand-record-card">
+                  <div class="brand-card-shine" aria-hidden="true"></div>
                   <div class="home-record-head">
-                    <span class="home-record-logo">D</span>
+                    <span class="brand-card-logo">
+                      <svg viewBox="0 0 80 80" aria-hidden="true">
+                        <path d="M24 4H43C63 4 76 19 76 40S63 76 43 76H24V52H46V28H24V4Z" fill="currentColor" />
+                        <path d="M3 28H24V52H3Z" fill="#6366F1" />
+                      </svg>
+                    </span>
                     <div><b>DevsHub Academy</b><small>Official Certificate Record</small></div>
                     <span class="home-record-valid">VERIFIED</span>
                   </div>
@@ -88,19 +131,25 @@
                     <h3>Professional Training Certificate</h3>
                     <span>Presented to</span>
                     <strong>Certificate Holder</strong>
+                    <div class="brand-serial-line">
+                      <span>DVH-2026-XXXXXXXX</span>
+                      <i></i>
+                    </div>
                   </div>
                   <div class="home-record-foot">
                     <span>Unique Serial Number</span>
-                    <span>QR Verification</span>
+                    <span>Official QR Verification</span>
                   </div>
                 </div>
+
+                <div class="brand-scan-line" aria-hidden="true"></div>
               </div>
             </section>
 
-            <section class="home-flow" aria-label="آلية التحقق">
-              <div><span>01</span><p><b>استلم شهادتك</b><small>تحصل على شهادة PDF برقم تسلسلي فريد.</small></p></div>
-              <div><span>02</span><p><b>أدخل السيريال أو امسح QR</b><small>انتقل إلى صفحة التحقق الرسمية.</small></p></div>
-              <div><span>03</span><p><b>شاهد السجل</b><small>تظهر معلومات صاحب الشهادة وتاريخ إصدارها.</small></p></div>
+            <section class="home-flow brand-flow" aria-label="آلية التحقق">
+              <div><span>01</span><p><b>إصدار الشهادة</b><small>الأدمن يسجل بيانات المتدرب ويرفع ملف PDF.</small></p></div>
+              <div><span>02</span><p><b>Serial + QR</b><small>يحصل كل سجل على معرف فريد يمكن مشاركته فوراً.</small></p></div>
+              <div><span>03</span><p><b>تحقق خلال ثوانٍ</b><small>المتحقق يشاهد الاسم، التاريخ وحالة الشهادة وملفها.</small></p></div>
             </section>
           </div>
         </section>

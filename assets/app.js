@@ -886,6 +886,7 @@ const base = [
         show("verify");
         setTimeout(() => $("#serial")?.focus(), 80);
       };
+      $("#homeAdminBtn").onclick = enterAdmin;
 
       $("#loginForm").onsubmit = async (event) => {
         event.preventDefault();
