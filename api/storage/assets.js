@@ -123,6 +123,8 @@ module.exports = async function handler(req, res) {
 
         const settings = body.organization;
         const colorPattern = /^#[0-9A-F]{6}$/i;
+        const domainPattern =
+          /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i;
 
         if (
           settings.primaryColor &&
@@ -136,6 +138,19 @@ module.exports = async function handler(req, res) {
           !colorPattern.test(String(settings.secondaryColor))
         ) {
           return json(res, 400, { error: "Invalid secondary color" });
+        }
+
+        if (
+          settings.customDomain &&
+          !domainPattern.test(
+            String(settings.customDomain)
+              .trim()
+              .toLowerCase()
+              .replace(/^https?:\/\//, "")
+              .replace(/\/$/, ""),
+          )
+        ) {
+          return json(res, 400, { error: "Invalid custom domain" });
         }
 
         const updated = await updateOrganizationSettings(
