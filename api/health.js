@@ -1,8 +1,8 @@
 "use strict";
 
-const { storageConfig } = require("./lib/storage");
-const { authConfig, isDemoMode } = require("./lib/auth");
-const { fileStorageConfig } = require("./lib/file-storage");
+const { storageConfig } = require("../server/storage");
+const { authConfig, isDemoMode } = require("../server/auth");
+const { fileStorageConfig } = require("../server/file-storage");
 
 module.exports = async function handler(req, res) {
   if (req.method !== "GET") {
