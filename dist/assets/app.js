@@ -24,15 +24,7 @@ const base = [
         );
       }
       function proposedSerial() {
-        const year = new Date().getFullYear();
-        let serial = "";
-        do {
-          const random = new Uint32Array(1);
-          crypto.getRandomValues(random);
-          const number = String(10000 + (random[0] % 90000));
-          serial = cleanPrefix() + "-" + year + "-" + number;
-        } while (find(serial));
-        return serial;
+        return cleanPrefix() + "-" + new Date().getFullYear() + "-AUTO";
       }
       function refreshSerialSuggestion() {
         $("#serialSuggestion").textContent = proposedSerial();
@@ -44,6 +36,7 @@ const base = [
       const CERT_API = "/api/certificates";
       const AUTH_API = "/api/auth";
       let cloudSyncAvailable = false;
+      let storageProvider = "demo";
       let authState = {
         checked: false,
         authenticated: false,
@@ -137,59 +130,104 @@ const base = [
         return false;
       }
 
-      function cloudSafeCertificate(cert) {
-        if (!cert) return cert;
-        return {
-          serial: cert.serial,
-          name: cert.name,
-          course: cert.course,
-          date: cert.date,
-          status: cert.status || "valid",
-          pdf: cert.pdf && !String(cert.pdf).startsWith("data:") ? cert.pdf : undefined,
-        };
+      async function issueCertificateRemote(payload) {
+        const response = await fetch(CERT_API, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify(payload),
+        });
+
+        const result = await response.json().catch(() => ({}));
+        storageProvider = result.storage || storageProvider;
+
+        if (!response.ok || !result.certificate) {
+          if (response.status === 401) {
+            authState.checked = false;
+            await enterAdmin();
+          }
+          throw new Error(
+            result.error || "تعذر إصدار الشهادة من السيرفر.",
+          );
+        }
+
+        cloudSyncAvailable = Boolean(result.persisted);
+        return result.certificate;
       }
 
-      async function syncCertificateRemote(cert) {
-        try {
-          const response = await fetch(CERT_API, {
-            method: "POST",
+      async function updateCertificateRemote(serial, patch) {
+        const response = await fetch(
+          CERT_API + "?serial=" + encodeURIComponent(serial),
+          {
+            method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(cloudSafeCertificate(cert)),
-          });
-          cloudSyncAvailable = response.ok;
-          return response.ok;
-        } catch (error) {
-          cloudSyncAvailable = false;
-          return false;
+            credentials: "same-origin",
+            body: JSON.stringify(patch),
+          },
+        );
+
+        const result = await response.json().catch(() => ({}));
+        storageProvider = result.storage || storageProvider;
+
+        if (!response.ok || !result.certificate) {
+          if (response.status === 401) {
+            authState.checked = false;
+            await enterAdmin();
+          }
+          throw new Error(
+            result.error || "تعذر تحديث الشهادة.",
+          );
         }
+
+        const current = find(serial) || {};
+        return {
+          ...current,
+          ...result.certificate,
+          serial: current.serial || result.certificate.serial || serial,
+        };
       }
 
       async function hydrateRemoteCerts() {
         try {
-          const response = await fetch(CERT_API, { cache: "no-store" });
-          if (!response.ok) throw new Error("cloud storage unavailable");
-          const remote = await response.json();
-          const remoteCerts = Array.isArray(remote.certificates) ? remote.certificates : [];
-          const map = new Map();
-          [...remoteCerts, ...certs].forEach((cert) => {
-            if (cert?.serial) map.set(cert.serial.toUpperCase(), cert);
+          const response = await fetch(CERT_API, {
+            cache: "no-store",
+            credentials: "same-origin",
           });
-          certs = Array.from(map.values());
-          cloudSyncAvailable = true;
+
+          if (!response.ok) {
+            if (response.status === 401) {
+              authState.checked = false;
+            }
+            throw new Error("cloud storage unavailable");
+          }
+
+          const remote = await response.json();
+          const remoteCerts = Array.isArray(remote.certificates)
+            ? remote.certificates
+            : [];
+
+          storageProvider = remote.storage || "demo";
+          cloudSyncAvailable = storageProvider !== "demo";
+
+          if (storageProvider === "demo") {
+            const map = new Map();
+            [...remoteCerts, ...certs].forEach((cert) => {
+              if (cert?.serial) map.set(cert.serial.toUpperCase(), cert);
+            });
+            certs = Array.from(map.values());
+          } else {
+            // In production the database is authoritative.
+            certs = remoteCerts;
+          }
+
           save();
           render();
-
-          // Migrate any existing local-only metadata the first time cloud storage is enabled.
-          const remoteSerials = new Set(remoteCerts.map((x) => x.serial?.toUpperCase()));
-          for (const cert of certs) {
-            if (!remoteSerials.has(cert.serial?.toUpperCase())) {
-              await syncCertificateRemote(cert);
-            }
-          }
         } catch (error) {
           cloudSyncAvailable = false;
+          render();
         }
       }
+
       function statusMeta(status) {
         const normalized = String(status || "valid").toLowerCase();
         if (normalized === "revoked") {
@@ -201,17 +239,36 @@ const base = [
         return { label: "موثّقة", className: "badge" };
       }
 
+      function canManageCertificates() {
+        if (authState.demoMode) return true;
+        return ["owner", "admin", "issuer"].includes(
+          authState.membership?.role,
+        );
+      }
+
       function render() {
         const q = $("#search").value?.toLowerCase() || "";
+        const selectedStatus = $("#statusFilter")?.value || "";
         const rows = $("#rows");
         rows.replaceChildren();
 
         certs
-          .filter((certificate) =>
-            (certificate.name + certificate.serial + certificate.course)
-              .toLowerCase()
-              .includes(q),
-          )
+          .filter((certificate) => {
+            if (
+              selectedStatus &&
+              String(certificate.status || "valid").toLowerCase() !==
+                selectedStatus
+            ) {
+              return false;
+            }
+
+            return (
+              !q ||
+              (certificate.name + certificate.serial + certificate.course)
+                .toLowerCase()
+                .includes(q)
+            );
+          })
           .forEach((certificate) => {
             const tr = document.createElement("tr");
             const meta = statusMeta(certificate.status);
@@ -242,13 +299,26 @@ const base = [
 
             const actionTd = document.createElement("td");
             actionTd.dataset.label = "الإجراء";
-            const button = document.createElement("button");
-            button.className = "link";
-            button.textContent = "عرض";
-            button.onclick = () => showCert(certificate);
-            actionTd.appendChild(button);
-            tr.appendChild(actionTd);
+            const actions = document.createElement("div");
+            actions.className = "table-actions";
 
+            const viewButton = document.createElement("button");
+            viewButton.className = "link";
+            viewButton.textContent = "عرض";
+            viewButton.onclick = () => showCert(certificate);
+            actions.appendChild(viewButton);
+
+            if (canManageCertificates()) {
+              const manageButton = document.createElement("button");
+              manageButton.className = "link manage-link";
+              manageButton.textContent = "إدارة";
+              manageButton.onclick = () =>
+                openCertificateManager(certificate);
+              actions.appendChild(manageButton);
+            }
+
+            actionTd.appendChild(actions);
+            tr.appendChild(actionTd);
             rows.appendChild(tr);
           });
 
@@ -386,22 +456,31 @@ const base = [
           : 'تحقق من السجل <span>↗</span>';
       }
 
-      async function fetchCertificateBySerial(serial) {
-        try {
-          const response = await fetch(
-            CERT_API + "?serial=" + encodeURIComponent(serial),
-            { cache: "no-store" },
-          );
-          if (response.status === 404) return null;
-          if (!response.ok) throw new Error("verification request failed");
-          const payload = await response.json();
-          return payload.certificate || null;
-        } catch (error) {
-          return null;
+      async function fetchCertificateBySerial(serial, source = "serial") {
+        const response = await fetch(
+          CERT_API +
+            "?serial=" +
+            encodeURIComponent(serial) +
+            "&source=" +
+            encodeURIComponent(source),
+          {
+            cache: "no-store",
+            credentials: "same-origin",
+          },
+        );
+
+        const payload = await response.json().catch(() => ({}));
+        storageProvider = payload.storage || storageProvider;
+
+        if (response.status === 404) return null;
+        if (!response.ok) {
+          throw new Error("verification request failed");
         }
+
+        return payload.certificate || null;
       }
 
-      async function verifySerial(value) {
+      async function verifySerial(value, source = "serial") {
         const serial = String(value || "").trim().toUpperCase();
         if (!serial) {
           $("#badSerial").textContent = "اكتب الرقم التسلسلي أولاً";
@@ -413,8 +492,17 @@ const base = [
         setVerifyLoading(true);
 
         try {
-          let certificate = find(serial);
-          if (!certificate) certificate = await fetchCertificateBySerial(serial);
+          let certificate = null;
+
+          try {
+            certificate = await fetchCertificateBySerial(serial, source);
+          } catch (error) {
+            if (storageProvider !== "demo") throw error;
+          }
+
+          if (!certificate && storageProvider === "demo") {
+            certificate = find(serial);
+          }
 
           if (certificate) {
             const existing = certs.findIndex(
@@ -534,6 +622,7 @@ const base = [
         show("verify");
       };
       $("#search").oninput = render;
+      $("#statusFilter").onchange = render;
       $("#addOpen").onclick = () => {
         refreshSerialSuggestion();
         $("#addModal").classList.add("show");
@@ -553,6 +642,122 @@ const base = [
         };
         $("#adminToolModal").classList.add("show");
       }
+      function createManagerField(labelText, control) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "field";
+        const label = document.createElement("label");
+        label.textContent = labelText;
+        wrapper.append(label, control);
+        return wrapper;
+      }
+
+      function openCertificateManager(certificate) {
+        const dialog = $("#adminToolModal");
+        const body = $("#adminToolBody");
+        const primary = $("#adminToolPrimary");
+
+        $("#adminToolTitle").textContent =
+          "إدارة الشهادة " + certificate.serial;
+        body.replaceChildren();
+
+        const name = document.createElement("input");
+        name.value = certificate.name || "";
+
+        const course = document.createElement("input");
+        course.value = certificate.course || "";
+
+        const expiry = document.createElement("input");
+        expiry.type = "date";
+        expiry.value = certificate.expiresAt || "";
+
+        const status = document.createElement("select");
+        [
+          ["valid", "صالحة"],
+          ["revoked", "ملغاة"],
+          ["expired", "منتهية"],
+        ].forEach(([value, label]) => {
+          const option = document.createElement("option");
+          option.value = value;
+          option.textContent = label;
+          status.appendChild(option);
+        });
+        status.value = certificate.status || "valid";
+
+        const reason = document.createElement("input");
+        reason.placeholder = "سبب الإلغاء (اختياري)";
+        reason.value = certificate.revokedReason || "";
+
+        const serial = document.createElement("code");
+        serial.className = "serial";
+        serial.textContent = certificate.serial;
+
+        const serialField = document.createElement("div");
+        serialField.className = "field";
+        const serialLabel = document.createElement("label");
+        serialLabel.textContent = "Certificate ID";
+        serialField.append(serialLabel, serial);
+
+        const reasonField = createManagerField("سبب الإلغاء", reason);
+        const syncReasonVisibility = () => {
+          reasonField.hidden = status.value !== "revoked";
+        };
+        status.onchange = syncReasonVisibility;
+        syncReasonVisibility();
+
+        body.append(
+          serialField,
+          createManagerField("اسم المتدرب", name),
+          createManagerField("اسم الدورة", course),
+          createManagerField("تاريخ الانتهاء", expiry),
+          createManagerField("حالة الشهادة", status),
+          reasonField,
+        );
+
+        primary.textContent = "حفظ التغييرات";
+        primary.onclick = async () => {
+          const patch = {
+            name: name.value.trim(),
+            course: course.value.trim(),
+            expiresAt: expiry.value || null,
+            status: status.value,
+            revokedReason:
+              status.value === "revoked" ? reason.value.trim() : "",
+          };
+
+          if (!patch.name || !patch.course) {
+            alert("اسم المتدرب واسم الدورة مطلوبان.");
+            return;
+          }
+
+          primary.disabled = true;
+          primary.textContent = "جاري الحفظ…";
+
+          try {
+            const updated = await updateCertificateRemote(
+              certificate.serial,
+              patch,
+            );
+
+            const index = certs.findIndex(
+              (item) => item.serial === certificate.serial,
+            );
+            if (index >= 0) certs[index] = updated;
+            else certs.unshift(updated);
+
+            save();
+            render();
+            closeAdminTool();
+          } catch (error) {
+            alert(error.message || "تعذر تحديث الشهادة.");
+          } finally {
+            primary.disabled = false;
+            primary.textContent = "حفظ التغييرات";
+          }
+        };
+
+        dialog.classList.add("show");
+      }
+
       function setAdminView(view) {
         document.querySelectorAll("[data-admin-view]").forEach((b) =>
           b.classList.toggle("side-active", b.dataset.adminView === view),
@@ -603,48 +808,80 @@ const base = [
       });
       $("#closeAdminTool").onclick = closeAdminTool;
       $("#saveCert").onclick = async () => {
-        let n = $("#newName").value.trim(),
-          c = $("#newCourse").value.trim();
-        if (!n || !c) {
+        const name = $("#newName").value.trim();
+        const course = $("#newCourse").value.trim();
+        const expiresAt = $("#newExpiresAt").value || null;
+        const prefix = cleanPrefix();
+        const button = $("#saveCert");
+
+        if (!name || !course) {
           alert("اكتب اسم المتدرب والدورة");
           return;
         }
-        let serial = proposedSerial();
-        let pdf;
+
+        let localPdf;
         const pdfFile = $("#newPdf").files[0];
+
         if (pdfFile) {
           if (pdfFile.size > 2500000) {
             alert("يرجى اختيار ملف PDF أصغر من 2.5MB للتجربة");
             return;
           }
-          pdf = await new Promise((resolve, reject) => {
+
+          localPdf = await new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = () => resolve(reader.result);
             reader.onerror = reject;
             reader.readAsDataURL(pdfFile);
           });
         }
-        let x = {
-          serial,
-          name: n,
-          course: c,
-          date: new Date().toLocaleDateString("en-GB", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          }),
-          pdf,
-        };
-        certs.unshift(x);
-        save();
-        render();
-        syncCertificateRemote(x);
-        $("#addModal").classList.remove("show");
-        $("#newName").value = "";
-        $("#newCourse").value = "";
-        $("#newPdf").value = "";
-        refreshSerialSuggestion();
-        alert("تم إنشاء الشهادة. كود التحقق: " + serial);
+
+        button.disabled = true;
+        button.textContent = "جاري إصدار الشهادة…";
+
+        try {
+          const issued = await issueCertificateRemote({
+            name,
+            course,
+            prefix,
+            date: new Date().toISOString().slice(0, 10),
+            expiresAt,
+            status: "valid",
+          });
+
+          const certificate = {
+            ...issued,
+            ...(localPdf && storageProvider === "demo"
+              ? { pdf: localPdf }
+              : {}),
+          };
+
+          const existing = certs.findIndex(
+            (item) => item.serial === certificate.serial,
+          );
+          if (existing >= 0) certs[existing] = certificate;
+          else certs.unshift(certificate);
+
+          save();
+          render();
+
+          $("#addModal").classList.remove("show");
+          $("#newName").value = "";
+          $("#newCourse").value = "";
+          $("#newExpiresAt").value = "";
+          $("#newPdf").value = "";
+          refreshSerialSuggestion();
+
+          alert(
+            "تم إنشاء الشهادة بنجاح. كود التحقق: " +
+              certificate.serial,
+          );
+        } catch (error) {
+          alert(error.message || "تعذر إصدار الشهادة.");
+        } finally {
+          button.disabled = false;
+          button.textContent = "حفظ وإنشاء سيريال";
+        }
       };
       $("#closeResult").onclick = () =>
         $("#resultModal").classList.remove("show");
@@ -678,7 +915,7 @@ const base = [
         if (!serial) return false;
         $("#serial").value = serial;
         stopCameraScanner();
-        await verifySerial(serial);
+        await verifySerial(serial, "qr");
         return true;
       }
 
@@ -835,13 +1072,18 @@ const base = [
         const hash = location.hash.split("/");
         if (hash[0] === "#certificate" && hash[1]) {
           const serial = decodeURIComponent(hash[1]);
-          const local = find(serial);
-          if (local) showCert(local);
-          else {
-            const remote = await fetchCertificateBySerial(serial);
-            if (remote) showCert(remote);
-            else show("verify");
+          let certificate = null;
+
+          try {
+            certificate = await fetchCertificateBySerial(serial, "direct_link");
+          } catch (error) {}
+
+          if (!certificate && storageProvider === "demo") {
+            certificate = find(serial);
           }
+
+          if (certificate) showCert(certificate);
+          else show("verify");
           return;
         }
 
