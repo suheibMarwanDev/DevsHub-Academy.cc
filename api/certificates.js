@@ -6,7 +6,7 @@ const {
   getCertificate,
   createCertificate,
   updateCertificate,
-} = require("./lib/storage");
+} = require("../server/storage");
 const {
   BASE_CERTIFICATES,
   VALID_STATUSES,
@@ -16,9 +16,9 @@ const {
   normalizeCertificatePatch,
   parseRequestBody,
   isDemoMode,
-} = require("./lib/certificates");
-const { requireAdminAccess } = require("./lib/auth");
-const { databaseConfig, logAudit, logVerification } = require("./lib/database");
+} = require("../server/certificates");
+const { requireAdminAccess } = require("../server/auth");
+const { databaseConfig, logAudit, logVerification } = require("../server/database");
 
 function json(res, status, body) {
   res.statusCode = status;
