@@ -4,6 +4,8 @@ const {
   databaseConfig,
   listDatabaseCertificates,
   getDatabaseCertificate,
+  createDatabaseCertificate,
+  updateDatabaseCertificate,
   upsertDatabaseCertificate,
 } = require("./database");
 
@@ -32,23 +34,14 @@ function storageConfig() {
   const redis = redisConfig();
 
   if (database.configured) {
-    return {
-      configured: true,
-      provider: "postgresql",
-    };
+    return { configured: true, provider: "postgresql" };
   }
 
   if (redis.configured) {
-    return {
-      configured: true,
-      provider: "redis",
-    };
+    return { configured: true, provider: "redis" };
   }
 
-  return {
-    configured: false,
-    provider: "demo",
-  };
+  return { configured: false, provider: "demo" };
 }
 
 async function redisCommand(command) {
@@ -123,28 +116,41 @@ async function readLegacyCertificates() {
   }
 }
 
-async function listRedisCertificates() {
+async function listRedisCertificates({ q = "", status = "", limit = 100 } = {}) {
   let certificates = [];
 
   try {
-    const hash = await redisCommand(["HGETALL", STORAGE_KEY]);
-    certificates = parseHashResult(hash);
+    certificates = parseHashResult(
+      await redisCommand(["HGETALL", STORAGE_KEY]),
+    );
   } catch (error) {
     if (error.code === "STORAGE_NOT_CONFIGURED") throw error;
   }
 
-  if (certificates.length) return certificates;
-
-  const legacy = await readLegacyCertificates();
-  if (legacy.length) {
-    for (const certificate of legacy) {
-      if (certificate?.serial) {
-        await upsertRedisCertificate(certificate).catch(() => {});
-      }
-    }
+  if (!certificates.length) {
+    certificates = await readLegacyCertificates();
   }
 
-  return legacy;
+  const search = String(q || "").trim().toLowerCase();
+  const normalizedStatus = String(status || "").trim().toLowerCase();
+
+  return certificates
+    .filter((certificate) => {
+      if (
+        normalizedStatus &&
+        String(certificate.status || "valid").toLowerCase() !== normalizedStatus
+      ) {
+        return false;
+      }
+
+      if (!search) return true;
+
+      return [certificate.serial, certificate.name, certificate.course]
+        .join(" ")
+        .toLowerCase()
+        .includes(search);
+    })
+    .slice(0, Math.min(Math.max(Number(limit) || 100, 1), 500));
 }
 
 async function getRedisCertificate(serial) {
@@ -167,35 +173,93 @@ async function getRedisCertificate(serial) {
   );
 }
 
-async function upsertRedisCertificate(certificate) {
+async function createRedisCertificate(certificate) {
+  const existing = await getRedisCertificate(certificate.serial);
+  if (existing) {
+    const error = new Error("Certificate serial already exists");
+    error.code = "STORAGE_CONFLICT";
+    throw error;
+  }
+
   await redisCommand([
     "HSET",
     STORAGE_KEY,
     certificate.serial,
     JSON.stringify(certificate),
   ]);
+
   return certificate;
 }
 
-async function listCertificates() {
-  if (databaseConfig().configured) {
-    return listDatabaseCertificates();
+async function updateRedisCertificate(serial, patch) {
+  const existing = await getRedisCertificate(serial);
+  if (!existing) return null;
+
+  const updated = {
+    ...existing,
+    ...patch,
+    serial: existing.serial,
+  };
+
+  if (updated.status === "revoked") {
+    updated.revokedAt = updated.revokedAt || new Date().toISOString();
+  } else {
+    delete updated.revokedAt;
+    delete updated.revokedReason;
   }
 
-  return listRedisCertificates();
+  await redisCommand([
+    "HSET",
+    STORAGE_KEY,
+    existing.serial,
+    JSON.stringify(updated),
+  ]);
+
+  return updated;
 }
 
-async function getCertificate(serial) {
+async function upsertRedisCertificate(certificate) {
+  const existing = await getRedisCertificate(certificate.serial);
+  if (!existing) return createRedisCertificate(certificate);
+
+  return updateRedisCertificate(certificate.serial, certificate);
+}
+
+async function listCertificates(options = {}) {
   if (databaseConfig().configured) {
-    return getDatabaseCertificate(serial);
+    return listDatabaseCertificates(options);
+  }
+
+  return listRedisCertificates(options);
+}
+
+async function getCertificate(serial, options = {}) {
+  if (databaseConfig().configured) {
+    return getDatabaseCertificate(serial, options);
   }
 
   return getRedisCertificate(serial);
 }
 
-async function upsertCertificate(certificate) {
+async function createCertificate(certificate, options = {}) {
   if (databaseConfig().configured) {
-    return upsertDatabaseCertificate(certificate);
+    return createDatabaseCertificate(certificate, options);
+  }
+
+  return createRedisCertificate(certificate);
+}
+
+async function updateCertificate(serial, patch, options = {}) {
+  if (databaseConfig().configured) {
+    return updateDatabaseCertificate(serial, patch, options);
+  }
+
+  return updateRedisCertificate(serial, patch);
+}
+
+async function upsertCertificate(certificate, options = {}) {
+  if (databaseConfig().configured) {
+    return upsertDatabaseCertificate(certificate, options);
   }
 
   return upsertRedisCertificate(certificate);
@@ -205,5 +269,7 @@ module.exports = {
   storageConfig,
   listCertificates,
   getCertificate,
+  createCertificate,
+  updateCertificate,
   upsertCertificate,
 };
