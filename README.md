@@ -36,10 +36,10 @@ No frontend framework or dependency install is required for the current UI.
 
 ```bash
 npm run check
-npm run build
+npm run build:static
 ```
 
-The build command recreates `dist/` from the source HTML/assets.
+The `build:static` command recreates `dist/` from the source HTML/assets without changing Vercel's existing deployment behavior.
 
 ## Certificate storage
 
