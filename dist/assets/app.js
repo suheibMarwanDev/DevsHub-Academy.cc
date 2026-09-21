@@ -35,6 +35,7 @@ const base = [
 
       const CERT_API = "/api/certificates";
       const AUTH_API = "/api/auth";
+      const STORAGE_API = "/api/storage";
       let cloudSyncAvailable = false;
       let storageProvider = "demo";
       let authState = {
@@ -185,6 +186,98 @@ const base = [
           ...result.certificate,
           serial: current.serial || result.certificate.serial || serial,
         };
+      }
+
+      function fileToDataUrl(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(new Error("تعذر قراءة الملف."));
+          reader.readAsDataURL(file);
+        });
+      }
+
+      async function uploadStorageAsset(kind, file, extra = {}) {
+        if (!file) throw new Error("اختر ملفاً أولاً.");
+
+        const dataUrl = await fileToDataUrl(file);
+        const response = await fetch(STORAGE_API + "/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({
+            kind,
+            dataUrl,
+            ...extra,
+          }),
+        });
+
+        const payload = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            authState.checked = false;
+            await enterAdmin();
+          }
+
+          throw new Error(
+            payload.error ||
+              (response.status === 413
+                ? "حجم الملف أكبر من الحد المسموح."
+                : "تعذر رفع الملف إلى التخزين السحابي."),
+          );
+        }
+
+        return payload;
+      }
+
+      async function loadStorageAssets() {
+        const response = await fetch(STORAGE_API + "/assets", {
+          cache: "no-store",
+          credentials: "same-origin",
+        });
+
+        const payload = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(
+            payload.error ||
+              "التخزين السحابي غير مربوط حالياً.",
+          );
+        }
+
+        return payload;
+      }
+
+      async function setActiveTemplate(templateId) {
+        const response = await fetch(STORAGE_API + "/assets", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({ templateId }),
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || "تعذر تفعيل القالب.");
+        }
+        return payload.template;
+      }
+
+      async function deleteStoredTemplate(templateId) {
+        const response = await fetch(
+          STORAGE_API + "/assets?id=" + encodeURIComponent(templateId),
+          {
+            method: "DELETE",
+            credentials: "same-origin",
+          },
+        );
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || "تعذر حذف القالب.");
+        }
+        return true;
       }
 
       async function hydrateRemoteCerts() {
@@ -758,6 +851,262 @@ const base = [
         dialog.classList.add("show");
       }
 
+      function modalField(labelText, control) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "field";
+        const label = document.createElement("label");
+        label.textContent = labelText;
+        wrapper.append(label, control);
+        return wrapper;
+      }
+
+      function storageMessage(text, type = "info") {
+        const message = document.createElement("div");
+        message.className = "storage-message storage-message-" + type;
+        message.textContent = text;
+        return message;
+      }
+
+      async function renderTemplateStorageList(container) {
+        container.replaceChildren(
+          storageMessage("جاري تحميل القوالب…"),
+        );
+
+        try {
+          const assets = await loadStorageAssets();
+          const templates = Array.isArray(assets.templates)
+            ? assets.templates
+            : [];
+
+          container.replaceChildren();
+
+          if (!templates.length) {
+            container.append(
+              storageMessage("لا توجد قوالب مرفوعة بعد."),
+            );
+            return;
+          }
+
+          templates.forEach((template) => {
+            const card = document.createElement("div");
+            card.className =
+              "storage-template-card" +
+              (template.isActive ? " is-active" : "");
+
+            const info = document.createElement("div");
+            const title = document.createElement("b");
+            title.textContent = template.name;
+            const meta = document.createElement("small");
+            meta.textContent =
+              (template.fileType || "file") +
+              (template.isActive ? " · ACTIVE" : "");
+            info.append(title, meta);
+
+            const actions = document.createElement("div");
+
+            const open = document.createElement("button");
+            open.className = "link";
+            open.textContent = "فتح";
+            open.onclick = () =>
+              window.open(template.fileUrl, "_blank", "noopener");
+
+            const activate = document.createElement("button");
+            activate.className = "link manage-link";
+            activate.textContent = template.isActive ? "نشط" : "تفعيل";
+            activate.disabled = Boolean(template.isActive);
+            activate.onclick = async () => {
+              activate.disabled = true;
+              try {
+                await setActiveTemplate(template.id);
+                await renderTemplateStorageList(container);
+              } catch (error) {
+                alert(error.message);
+                activate.disabled = false;
+              }
+            };
+
+            const remove = document.createElement("button");
+            remove.className = "link storage-delete";
+            remove.textContent = "حذف";
+            remove.onclick = async () => {
+              if (!confirm("حذف هذا القالب من التخزين السحابي؟")) return;
+              remove.disabled = true;
+              try {
+                await deleteStoredTemplate(template.id);
+                await renderTemplateStorageList(container);
+              } catch (error) {
+                alert(error.message);
+                remove.disabled = false;
+              }
+            };
+
+            actions.append(open, activate, remove);
+            card.append(info, actions);
+            container.append(card);
+          });
+        } catch (error) {
+          container.replaceChildren(
+            storageMessage(error.message, "error"),
+          );
+        }
+      }
+
+      async function openTemplateStorageManager() {
+        const modal = $("#adminToolModal");
+        const body = $("#adminToolBody");
+        const primary = $("#adminToolPrimary");
+
+        $("#adminToolTitle").textContent = "قوالب الشهادات";
+        body.replaceChildren();
+
+        const name = document.createElement("input");
+        name.placeholder = "مثال: القالب المهني الرسمي";
+
+        const file = document.createElement("input");
+        file.type = "file";
+        file.accept = "application/pdf,image/png,image/jpeg,image/webp";
+
+        const active = document.createElement("input");
+        active.type = "checkbox";
+        const activeLabel = document.createElement("label");
+        activeLabel.className = "storage-checkbox";
+        activeLabel.append(active, document.createTextNode(" تفعيل القالب بعد الرفع"));
+
+        const note = storageMessage(
+          "القوالب تحفظ داخل Private Supabase Storage. الحد الحالي 2.5MB للملف.",
+        );
+
+        const list = document.createElement("div");
+        list.className = "storage-template-list";
+
+        body.append(
+          modalField("اسم القالب", name),
+          modalField("ملف القالب (PDF أو صورة)", file),
+          activeLabel,
+          note,
+          list,
+        );
+
+        primary.textContent = "رفع القالب";
+        primary.disabled = false;
+        primary.onclick = async () => {
+          if (!name.value.trim() || !file.files[0]) {
+            alert("اكتب اسم القالب واختر ملفاً.");
+            return;
+          }
+
+          primary.disabled = true;
+          primary.textContent = "جاري الرفع…";
+
+          try {
+            await uploadStorageAsset("template", file.files[0], {
+              name: name.value.trim(),
+              isActive: active.checked,
+            });
+            name.value = "";
+            file.value = "";
+            active.checked = false;
+            await renderTemplateStorageList(list);
+          } catch (error) {
+            alert(error.message);
+          } finally {
+            primary.disabled = false;
+            primary.textContent = "رفع القالب";
+          }
+        };
+
+        modal.classList.add("show");
+        await renderTemplateStorageList(list);
+      }
+
+      async function openBrandingStorageManager() {
+        const modal = $("#adminToolModal");
+        const body = $("#adminToolBody");
+        const primary = $("#adminToolPrimary");
+
+        $("#adminToolTitle").textContent = "هوية المؤسسة والشعار";
+        body.replaceChildren();
+
+        const previewWrap = document.createElement("div");
+        previewWrap.className = "storage-logo-preview";
+        previewWrap.append(
+          storageMessage("جاري تحميل بيانات المؤسسة…"),
+        );
+
+        const file = document.createElement("input");
+        file.type = "file";
+        file.accept = "image/png,image/jpeg,image/webp";
+
+        body.append(
+          previewWrap,
+          modalField("رفع شعار جديد", file),
+          storageMessage(
+            "الشعار يحفظ داخل Private Storage، والحد الحالي 1.5MB.",
+          ),
+        );
+
+        async function refreshBranding() {
+          try {
+            const assets = await loadStorageAssets();
+            previewWrap.replaceChildren();
+
+            if (assets.organization?.logoUrl) {
+              const img = document.createElement("img");
+              img.src =
+                assets.organization.logoUrl +
+                (assets.organization.logoUrl.includes("?") ? "&" : "?") +
+                "t=" +
+                Date.now();
+              img.alt = "Organization logo";
+
+              const text = document.createElement("div");
+              const name = document.createElement("b");
+              name.textContent =
+                assets.organization.name || "DevsHub Academy";
+              const slug = document.createElement("small");
+              slug.textContent = assets.organization.slug || "";
+              text.append(name, slug);
+
+              previewWrap.append(img, text);
+            } else {
+              previewWrap.append(
+                storageMessage("لا يوجد شعار سحابي مرفوع حالياً."),
+              );
+            }
+          } catch (error) {
+            previewWrap.replaceChildren(
+              storageMessage(error.message, "error"),
+            );
+          }
+        }
+
+        primary.textContent = "رفع الشعار";
+        primary.disabled = false;
+        primary.onclick = async () => {
+          if (!file.files[0]) {
+            alert("اختر صورة الشعار أولاً.");
+            return;
+          }
+
+          primary.disabled = true;
+          primary.textContent = "جاري الرفع…";
+
+          try {
+            await uploadStorageAsset("logo", file.files[0]);
+            file.value = "";
+            await refreshBranding();
+          } catch (error) {
+            alert(error.message);
+          } finally {
+            primary.disabled = false;
+            primary.textContent = "رفع الشعار";
+          }
+        };
+
+        modal.classList.add("show");
+        await refreshBranding();
+      }
+
       function setAdminView(view) {
         document.querySelectorAll("[data-admin-view]").forEach((b) =>
           b.classList.toggle("side-active", b.dataset.adminView === view),
@@ -767,6 +1116,16 @@ const base = [
           show("verify");
           return;
         }
+        if (view === "templates") {
+          openTemplateStorageManager();
+          return;
+        }
+
+        if (view === "settings") {
+          openBrandingStorageManager();
+          return;
+        }
+
         if (view === "dashboard" || view === "certificates") {
           $("#adminHeading").textContent =
             view === "dashboard" ? "لوحة إدارة الشهادات" : "الشهادات الصادرة";
@@ -784,20 +1143,10 @@ const base = [
             '<p>ارفع ملف CSV يحتوي اسم المتدرب واسم الدورة لإصدار عدة شهادات دفعة واحدة.</p><label class="soft upload" style="margin-top:14px">▧ اختيار ملف CSV<input type="file" accept=".csv" /></label>',
             "متابعة",
           ],
-          templates: [
-            "قوالب الشهادات",
-            '<p>القالب النشط: <b>الشهادة المهنية الرسمية</b></p><div class="tip">يمكنك تخصيص الشعار والألوان والحقول عند ربط النظام بالخدمة الخلفية.</div>',
-            "تحديد القالب",
-          ],
           reports: [
             "تقرير الأداء",
             '<p>هذا الشهر: <b>' + certs.length + '</b> شهادة صادرة و <b>86</b> عملية تحقق ناجحة اليوم.</p><div class="tip">ستظهر التقارير التفصيلية هنا عند ربط بيانات المؤسسة.</div>',
             "تحديث التقرير",
-          ],
-          settings: [
-            "إعدادات المؤسسة",
-            '<p>هوية المنصة الحالية: <b>DevsHub Academy.cc</b></p><div class="tip">تخصيص الهوية، دومين التحقق، وشعار المؤسسة متاح في النسخة الكاملة.</div>',
-            "حفظ الإعدادات",
           ],
         };
         const tool = tools[view];
@@ -823,17 +1172,15 @@ const base = [
         const pdfFile = $("#newPdf").files[0];
 
         if (pdfFile) {
-          if (pdfFile.size > 2500000) {
-            alert("يرجى اختيار ملف PDF أصغر من 2.5MB للتجربة");
+          if (
+            pdfFile.type !== "application/pdf" ||
+            pdfFile.size > 2500000
+          ) {
+            alert("اختر ملف PDF صالحاً وأصغر من 2.5MB.");
             return;
           }
 
-          localPdf = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(pdfFile);
-          });
+          localPdf = await fileToDataUrl(pdfFile);
         }
 
         button.disabled = true;
@@ -849,12 +1196,30 @@ const base = [
             status: "valid",
           });
 
-          const certificate = {
-            ...issued,
-            ...(localPdf && storageProvider === "demo"
-              ? { pdf: localPdf }
-              : {}),
-          };
+          let certificate = { ...issued };
+          let pdfUploadWarning = "";
+
+          if (localPdf) {
+            if (storageProvider === "postgresql") {
+              try {
+                const uploaded = await uploadStorageAsset(
+                  "certificate",
+                  pdfFile,
+                  { serial: issued.serial },
+                );
+                certificate = {
+                  ...certificate,
+                  ...(uploaded.certificate || {}),
+                };
+              } catch (error) {
+                pdfUploadWarning =
+                  " تم إصدار الشهادة، لكن تعذر رفع ملف PDF: " +
+                  error.message;
+              }
+            } else {
+              certificate.pdf = localPdf;
+            }
+          }
 
           const existing = certs.findIndex(
             (item) => item.serial === certificate.serial,
@@ -874,7 +1239,8 @@ const base = [
 
           alert(
             "تم إنشاء الشهادة بنجاح. كود التحقق: " +
-              certificate.serial,
+              certificate.serial +
+              pdfUploadWarning,
           );
         } catch (error) {
           alert(error.message || "تعذر إصدار الشهادة.");
