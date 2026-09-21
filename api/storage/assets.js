@@ -1,6 +1,6 @@
 "use strict";
 
-const { requireAdminAccess } = require("../lib/auth");
+const { requireAdminAccess } = require("../../server/auth");
 const {
   databaseConfig,
   getDefaultOrganizationId,
@@ -9,11 +9,11 @@ const {
   setActiveCertificateTemplate,
   deleteCertificateTemplate,
   logAudit,
-} = require("../lib/database");
+} = require("../../server/database");
 const {
   fileStorageConfig,
   removeObject,
-} = require("../lib/file-storage");
+} = require("../../server/file-storage");
 
 function json(res, status, body) {
   res.statusCode = status;
