@@ -79,6 +79,7 @@ function mapCertificate(row) {
     date: row.issued_at,
     status: row.status || "valid",
     ...(row.pdf_url ? { pdf: row.pdf_url } : {}),
+    ...(row.pdf_path ? { pdfPath: row.pdf_path } : {}),
     ...(row.expires_at ? { expiresAt: row.expires_at } : {}),
     ...(row.revoked_reason ? { revokedReason: row.revoked_reason } : {}),
     ...(row.revoked_at ? { revokedAt: row.revoked_at } : {}),
@@ -97,6 +98,7 @@ function certificateSelect() {
     "expires_at",
     "status",
     "pdf_url",
+    "pdf_path",
     "revoked_at",
     "revoked_reason",
     "created_at",
@@ -172,6 +174,7 @@ async function createDatabaseCertificate(certificate, {
     expires_at: certificate.expiresAt || null,
     status: certificate.status || "valid",
     pdf_url: certificate.pdf || null,
+    pdf_path: certificate.pdfPath || null,
     verification_path:
       "/#certificate/" + encodeURIComponent(certificate.serial),
     revoked_at:
@@ -206,6 +209,7 @@ async function updateDatabaseCertificate(serial, patch, {
   if ("date" in patch) body.issued_at = patch.date;
   if ("expiresAt" in patch) body.expires_at = patch.expiresAt;
   if ("pdf" in patch) body.pdf_url = patch.pdf;
+  if ("pdfPath" in patch) body.pdf_path = patch.pdfPath;
 
   if ("status" in patch) {
     body.status = patch.status;
@@ -249,12 +253,149 @@ async function upsertDatabaseCertificate(certificate, options = {}) {
         ? { expiresAt: certificate.expiresAt }
         : {}),
       ...(certificate.pdf !== undefined ? { pdf: certificate.pdf } : {}),
+      ...(certificate.pdfPath !== undefined
+        ? { pdfPath: certificate.pdfPath }
+        : {}),
       ...(certificate.revokedReason !== undefined
         ? { revokedReason: certificate.revokedReason }
         : {}),
     },
     options,
   );
+}
+
+async function getOrganizationById(organizationId) {
+  if (!organizationId) return null;
+
+  const rows = await supabaseRequest(
+    "organizations?select=id,name,slug,status,logo_path&id=eq." +
+      encodeURIComponent(organizationId) +
+      "&limit=1",
+  );
+
+  return Array.isArray(rows) && rows[0] ? rows[0] : null;
+}
+
+async function getOrganizationBySlug(slug) {
+  const normalized = String(slug || "").trim();
+  if (!normalized) return null;
+
+  const rows = await supabaseRequest(
+    "organizations?select=id,name,slug,status,logo_path&slug=eq." +
+      encodeURIComponent(normalized) +
+      "&limit=1",
+  );
+
+  return Array.isArray(rows) && rows[0] ? rows[0] : null;
+}
+
+async function updateOrganizationLogoPath(organizationId, logoPath) {
+  const rows = await supabaseRequest(
+    "organizations?id=eq." + encodeURIComponent(organizationId),
+    {
+      method: "PATCH",
+      headers: { Prefer: "return=representation" },
+      body: JSON.stringify({ logo_path: logoPath || null }),
+    },
+  );
+
+  return Array.isArray(rows) && rows[0] ? rows[0] : null;
+}
+
+async function listCertificateTemplates(organizationId) {
+  const rows = await supabaseRequest(
+    "certificate_templates?select=id,organization_id,name,file_path,preview_path,file_type,is_active,metadata,created_at,updated_at&organization_id=eq." +
+      encodeURIComponent(organizationId) +
+      "&order=created_at.desc",
+  );
+
+  return Array.isArray(rows) ? rows : [];
+}
+
+async function createCertificateTemplate({
+  organizationId,
+  name,
+  filePath,
+  fileType,
+  isActive = false,
+}) {
+  if (isActive) {
+    await supabaseRequest(
+      "certificate_templates?organization_id=eq." +
+        encodeURIComponent(organizationId),
+      {
+        method: "PATCH",
+        headers: { Prefer: "return=minimal" },
+        body: JSON.stringify({ is_active: false }),
+      },
+    );
+  }
+
+  const rows = await supabaseRequest("certificate_templates", {
+    method: "POST",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({
+      organization_id: organizationId,
+      name,
+      file_path: filePath,
+      file_type: fileType || null,
+      is_active: Boolean(isActive),
+    }),
+  });
+
+  return Array.isArray(rows) && rows[0] ? rows[0] : null;
+}
+
+async function setActiveCertificateTemplate(organizationId, templateId) {
+  await supabaseRequest(
+    "certificate_templates?organization_id=eq." +
+      encodeURIComponent(organizationId),
+    {
+      method: "PATCH",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify({ is_active: false }),
+    },
+  );
+
+  const rows = await supabaseRequest(
+    "certificate_templates?id=eq." +
+      encodeURIComponent(templateId) +
+      "&organization_id=eq." +
+      encodeURIComponent(organizationId),
+    {
+      method: "PATCH",
+      headers: { Prefer: "return=representation" },
+      body: JSON.stringify({ is_active: true }),
+    },
+  );
+
+  return Array.isArray(rows) && rows[0] ? rows[0] : null;
+}
+
+async function deleteCertificateTemplate(organizationId, templateId) {
+  const rows = await supabaseRequest(
+    "certificate_templates?select=id,file_path,preview_path&id=eq." +
+      encodeURIComponent(templateId) +
+      "&organization_id=eq." +
+      encodeURIComponent(organizationId) +
+      "&limit=1",
+  );
+
+  const template = Array.isArray(rows) && rows[0] ? rows[0] : null;
+  if (!template) return null;
+
+  await supabaseRequest(
+    "certificate_templates?id=eq." +
+      encodeURIComponent(templateId) +
+      "&organization_id=eq." +
+      encodeURIComponent(organizationId),
+    {
+      method: "DELETE",
+      headers: { Prefer: "return=minimal" },
+    },
+  );
+
+  return template;
 }
 
 async function logVerification({
@@ -311,11 +452,19 @@ async function logAudit({
 
 module.exports = {
   databaseConfig,
+  getDefaultOrganizationId,
   listDatabaseCertificates,
   getDatabaseCertificate,
   createDatabaseCertificate,
   updateDatabaseCertificate,
   upsertDatabaseCertificate,
+  getOrganizationById,
+  getOrganizationBySlug,
+  updateOrganizationLogoPath,
+  listCertificateTemplates,
+  createCertificateTemplate,
+  setActiveCertificateTemplate,
+  deleteCertificateTemplate,
   logVerification,
   logAudit,
 };
