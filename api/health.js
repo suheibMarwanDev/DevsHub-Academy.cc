@@ -29,6 +29,14 @@ module.exports = async function handler(req, res) {
       fileStorageConfigured: files.configured,
       fileStorageBucket: files.bucket,
       demoMode: isDemoMode(),
+      release: String(
+        process.env.VERCEL_GIT_COMMIT_SHA || "local",
+      ).slice(0, 12),
+      environment:
+        process.env.VERCEL_ENV ||
+        process.env.NODE_ENV ||
+        "local",
+      timestamp: new Date().toISOString(),
     }),
   );
 };
