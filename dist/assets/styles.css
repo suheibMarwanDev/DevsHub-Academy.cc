@@ -3510,3 +3510,96 @@ body[data-view="certificate"] {
     padding: 23px 18px !important;
   }
 }
+
+
+/* CERTIFICATE ADMIN CRUD v1 */
+.certificate-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.certificate-filters select {
+  min-height: 39px;
+  padding: 0 32px 0 11px;
+  border: 1px solid #d8e2e5;
+  border-radius: 6px;
+  outline: none;
+  background: #fff;
+  color: #48616a;
+  font: 700 9px/1 Cairo, sans-serif;
+  cursor: pointer;
+}
+
+.certificate-filters select:focus {
+  border-color: #0e7280;
+  box-shadow: 0 0 0 3px #0e728014;
+}
+
+.table-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.table-actions .link {
+  min-height: 31px;
+  padding: 0 9px;
+  border-radius: 5px;
+}
+
+.manage-link {
+  border: 1px solid #d8e4e7 !important;
+  background: #f6fafa !important;
+  color: #315c65 !important;
+}
+
+.manage-link:hover {
+  border-color: #b9d2d7 !important;
+  background: #edf6f7 !important;
+}
+
+#adminToolBody select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 11px;
+  border: 1px solid #d5e0e3;
+  border-radius: 6px;
+  outline: none;
+  background: #fff;
+  color: #17324d;
+  font: 600 11px/1 Cairo, sans-serif;
+}
+
+#adminToolBody select:focus {
+  border-color: #0e7280;
+  box-shadow: 0 0 0 3px #0e728014;
+}
+
+#adminToolBody .field[hidden] {
+  display: none !important;
+}
+
+#adminToolPrimary:disabled,
+#saveCert:disabled {
+  cursor: wait;
+  opacity: .7;
+}
+
+@media (max-width: 720px) {
+  .certificate-filters {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .certificate-filters select,
+  .certificate-filters .search {
+    width: 100%;
+  }
+
+  .table-actions {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+}
