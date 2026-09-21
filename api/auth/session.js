@@ -1,6 +1,6 @@
 "use strict";
 
-const { resolveSession } = require("../lib/auth");
+const { resolveSession } = require("../../server/auth");
 
 function json(res, status, body) {
   res.statusCode = status;
