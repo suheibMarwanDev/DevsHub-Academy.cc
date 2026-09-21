@@ -1,6 +1,6 @@
 "use strict";
 
-const { clearSessionCookies } = require("../lib/auth");
+const { clearSessionCookies } = require("../../server/auth");
 
 function json(res, status, body) {
   res.statusCode = status;
