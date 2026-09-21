@@ -68,6 +68,7 @@ function clientCertificate(certificate, issuer = null) {
         : null,
       primaryColor: issuer.primary_color || null,
       secondaryColor: issuer.secondary_color || null,
+      customDomain: issuer.custom_domain || null,
     };
   }
 
