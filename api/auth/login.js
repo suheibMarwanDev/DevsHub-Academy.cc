@@ -9,8 +9,14 @@ const {
   setActiveOrganizationCookie,
   clearSessionCookies,
 } = require("../../server/auth");
+const {
+  requestOriginAllowed,
+  allowRateLimitedRequest,
+  applyApiSecurityHeaders,
+} = require("../../server/security");
 
 function json(res, status, body) {
+  applyApiSecurityHeaders(res);
   res.statusCode = status;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Cache-Control", "no-store");
@@ -22,6 +28,22 @@ module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return json(res, 405, { error: "Method not allowed" });
+  }
+
+  if (!requestOriginAllowed(req)) {
+    return json(res, 403, { error: "Invalid request origin" });
+  }
+
+  const allowed = await allowRateLimitedRequest(
+    req,
+    "login_attempt",
+    10,
+    900,
+  );
+  if (!allowed) {
+    return json(res, 429, {
+      error: "Too many login attempts. Try again later.",
+    });
   }
 
   if (isDemoMode()) {
