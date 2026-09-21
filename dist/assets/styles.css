@@ -4001,3 +4001,199 @@ body[data-view="certificate"] {
   padding: 4px;
   cursor: pointer;
 }
+
+
+/* FRONTEND COLOR REFINEMENT v1 */
+#verify,
+#certificate {
+  --front-ink: #102f38;
+  --front-navy: #0a303b;
+  --front-navy-hover: #0e4a57;
+  --front-teal: #087f89;
+  --front-teal-soft: #e7f4f3;
+  --front-page: #f3f7f6;
+  --front-surface: #ffffff;
+  --front-border: #d5e1df;
+  --front-muted: #667d82;
+  --front-success: #167a59;
+}
+
+body[data-view="verify"],
+body[data-view="certificate"] {
+  background: #edf3f2 !important;
+}
+
+#verify,
+#certificate {
+  background:
+    linear-gradient(180deg, #fbfdfc 0%, var(--front-page) 54%, #edf3f2 100%) !important;
+  color: var(--front-ink) !important;
+}
+
+#verify .verification-intro h1,
+#verify .verification-principles .section-heading h2,
+#certificate .status-copy h1 {
+  color: var(--front-ink) !important;
+}
+
+#verify .verification-intro h1 em,
+#verify .identity-sequence > div > b,
+#verify .principle-grid article > b,
+#verify .demo-serial,
+#certificate .record-checklist > div > span {
+  color: var(--front-teal) !important;
+}
+
+#verify .credential-eyebrow,
+#verify .console-kicker > span {
+  color: #3e6670 !important;
+}
+
+#verify .credential-lead,
+#verify .verification-principles .section-heading p,
+#verify .principle-grid p {
+  color: var(--front-muted) !important;
+}
+
+#verify .verification-console,
+#verify .reference-search,
+#verify .issuer-pill,
+#certificate .record-context-bar,
+#certificate .record-checklist {
+  border-color: var(--front-border) !important;
+  background: var(--front-surface) !important;
+}
+
+#verify .verification-console {
+  box-shadow: 0 24px 64px #113b4410 !important;
+}
+
+#verify .reference-search {
+  background: #fbfdfc !important;
+}
+
+#verify .reference-search .search-card-head {
+  border-bottom-color: #e2ebe8 !important;
+  background: #f8fbfa !important;
+}
+
+#verify .reference-search .search-card-head span,
+#verify .identity-sequence strong,
+#verify .principle-grid h3,
+#certificate .record-context-bar b {
+  color: #23474f !important;
+}
+
+#verify #serial {
+  border-color: #c7d8d5 !important;
+  background: #ffffff !important;
+  color: #173942 !important;
+  caret-color: var(--front-teal) !important;
+}
+
+#verify #serial:focus {
+  border-color: #59aeb3 !important;
+  box-shadow: 0 0 0 3px #087f8912 !important;
+}
+
+#verify .verify-main-btn {
+  background: var(--front-navy) !important;
+}
+
+#verify .verify-main-btn:hover {
+  background: var(--front-navy-hover) !important;
+}
+
+#verify .credential-secondary-actions .soft {
+  border-color: #d4e1df !important;
+  background: #f8fbfa !important;
+  color: #365d65 !important;
+}
+
+#verify .credential-secondary-actions .soft:hover {
+  border-color: #aeced0 !important;
+  background: #eef7f6 !important;
+}
+
+#verify .public-record-note {
+  border-color: #d8e5e2 !important;
+  background: #f5f9f8 !important;
+}
+
+#verify .public-record-note > span {
+  background: var(--front-teal-soft) !important;
+}
+
+#verify .verification-hero::before {
+  background: radial-gradient(circle, #24aeb715, transparent 68%) !important;
+}
+
+#verify .credential-visual {
+  border-color: #1c4b56 !important;
+  background:
+    radial-gradient(circle at 80% 15%, #31c5cc1b, transparent 34%),
+    linear-gradient(155deg, #0b3440, #061e29) !important;
+}
+
+#verify .preview-brand b,
+#verify .live-label,
+#verify .live-label i,
+#verify .log-live {
+  color: #42cbd0 !important;
+}
+
+#verify .live-label i,
+#verify .log-live {
+  background: #42cbd0 !important;
+}
+
+#verify .verification-assurance {
+  background:
+    linear-gradient(135deg, #0a2f39, #0d3b45) !important;
+}
+
+#verify .verification-assurance .credential-eyebrow {
+  color: #79d5d7 !important;
+}
+
+#certificate .public-status-banner {
+  border-color: #c9dfd5 !important;
+  background:
+    linear-gradient(135deg, #f7fcf9, #f1f8f5) !important;
+}
+
+#certificate .status-seal {
+  border-color: #a8d4c1 !important;
+  background: #e6f5ed !important;
+  color: var(--front-success) !important;
+}
+
+#certificate .status-valid {
+  border-color: #acd8c5 !important;
+  background: #e8f6ef !important;
+  color: #146f53 !important;
+}
+
+#certificate .public-record-card {
+  border-top-color: var(--issuer-primary, var(--front-teal)) !important;
+}
+
+#certificate .public-scope-note > i {
+  background: var(--front-teal-soft) !important;
+  color: #315f66 !important;
+}
+
+#certificate .official-qr-card {
+  border-color: #d6e3e1 !important;
+  background: #f8fbfa !important;
+}
+
+#certificate .record-actions .primary {
+  background: var(--issuer-secondary, var(--front-navy)) !important;
+}
+
+#certificate .record-actions .soft {
+  border-color: #d6e2e0 !important;
+  background: #f8fbfa !important;
+  color: #48676d !important;
+}
