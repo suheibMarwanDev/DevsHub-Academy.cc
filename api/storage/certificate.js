@@ -1,7 +1,7 @@
 "use strict";
 
-const { getCertificate } = require("../lib/storage");
-const { createSignedUrl } = require("../lib/file-storage");
+const { getCertificate } = require("../../server/storage");
+const { createSignedUrl } = require("../../server/file-storage");
 
 module.exports = async function handler(req, res) {
   if (req.method !== "GET") {
