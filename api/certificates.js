@@ -4,15 +4,21 @@ const {
   storageConfig,
   listCertificates,
   getCertificate,
-  upsertCertificate,
+  createCertificate,
+  updateCertificate,
 } = require("./lib/storage");
 const {
   BASE_CERTIFICATES,
+  VALID_STATUSES,
+  generateSerial,
+  normalizePrefix,
   normalizeCertificate,
+  normalizeCertificatePatch,
   parseRequestBody,
   isDemoMode,
 } = require("./lib/certificates");
 const { requireAdminAccess } = require("./lib/auth");
+const { databaseConfig, logAudit, logVerification } = require("./lib/database");
 
 function json(res, status, body) {
   res.statusCode = status;
@@ -21,6 +27,44 @@ function json(res, status, body) {
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("Referrer-Policy", "same-origin");
   res.end(JSON.stringify(body));
+}
+
+function organizationIdFrom(access) {
+  return access?.session?.membership?.organization?.id || null;
+}
+
+function actorIdFrom(access) {
+  return access?.session?.user?.id || null;
+}
+
+async function generateUniqueSerial(prefix) {
+  const safePrefix = normalizePrefix(prefix);
+
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    const serial = generateSerial(safePrefix);
+    const existing = await getCertificate(serial);
+    if (!existing) return serial;
+  }
+
+  const error = new Error("Unable to allocate unique certificate serial");
+  error.code = "SERIAL_GENERATION_FAILED";
+  throw error;
+}
+
+async function auditCertificate(access, action, certificate, details = {}) {
+  if (!databaseConfig().configured || !certificate) return;
+
+  await logAudit({
+    organizationId: organizationIdFrom(access),
+    actorUserId: actorIdFrom(access),
+    action,
+    entityType: "certificate",
+    entityId: certificate.id || null,
+    details: {
+      serial: certificate.serial,
+      ...details,
+    },
+  }).catch(() => {});
 }
 
 module.exports = async function handler(req, res) {
@@ -32,9 +76,22 @@ module.exports = async function handler(req, res) {
         const certificate = await getCertificate(serial);
         const fallback =
           BASE_CERTIFICATES.find((item) => item.serial === serial) || null;
+        const result = certificate || fallback;
 
-        return json(res, certificate || fallback ? 200 : 404, {
-          certificate: certificate || fallback,
+        if (databaseConfig().configured) {
+          await logVerification({
+            certificateId: result?.id || null,
+            serial,
+            result: result?.status || "not_found",
+            source: String(req.query?.source || "serial").toLowerCase() === "qr"
+              ? "qr"
+              : "serial",
+            userAgent: String(req.headers["user-agent"] || "").slice(0, 500),
+          }).catch(() => {});
+        }
+
+        return json(res, result ? 200 : 404, {
+          certificate: result,
           storage: storageConfig().provider,
         });
       }
@@ -47,11 +104,27 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      const stored = await listCertificates();
-      const certificates = stored.length ? stored : BASE_CERTIFICATES;
+      const q = String(req.query?.q || "").trim().slice(0, 120);
+      const status = String(req.query?.status || "").trim().toLowerCase();
+      const limit = Math.min(Math.max(Number(req.query?.limit) || 100, 1), 500);
+
+      if (status && !VALID_STATUSES.has(status)) {
+        return json(res, 400, { error: "Invalid certificate status" });
+      }
+
+      const stored = await listCertificates({
+        organizationId: organizationIdFrom(access),
+        q,
+        status,
+        limit,
+      });
+      const certificates =
+        stored.length || q || status ? stored : BASE_CERTIFICATES;
 
       return json(res, 200, {
         certificates,
+        count: certificates.length,
+        filters: { q, status: status || null, limit },
         storage: storageConfig().provider,
         demoMode: isDemoMode(),
         session: {
@@ -74,46 +147,137 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      const cert = normalizeCertificate(parseRequestBody(req.body));
-      if (!cert) {
-        return json(res, 400, {
-          error: "Invalid certificate payload",
-        });
+      const body = parseRequestBody(req.body) || {};
+      const normalized = normalizeCertificate(body, { requireSerial: false });
+
+      if (!normalized) {
+        return json(res, 400, { error: "Invalid certificate payload" });
       }
+
+      const serial = await generateUniqueSerial(body.prefix);
+      const certificate = {
+        ...normalized,
+        serial,
+        status: normalized.status || "valid",
+      };
 
       if (!storageConfig().configured) {
-        return json(res, 503, {
-          error: "Cloud storage is not configured",
-          demoMode: true,
-          note: "The frontend will continue using its local demo fallback.",
+        if (!isDemoMode()) {
+          return json(res, 503, { error: "Cloud storage is not configured" });
+        }
+
+        return json(res, 201, {
+          certificate,
+          storage: "demo",
+          persisted: false,
         });
       }
 
-      await upsertCertificate(cert);
-      return json(res, 200, {
-        certificate: cert,
+      const created = await createCertificate(certificate, {
+        organizationId: organizationIdFrom(access),
+      });
+
+      await auditCertificate(access, "certificate.issued", created, {
+        status: created.status,
+      });
+
+      return json(res, 201, {
+        certificate: created,
         storage: storageConfig().provider,
+        persisted: true,
       });
     }
 
-    res.setHeader("Allow", "GET, POST");
-    return json(res, 405, { error: "Method not allowed" });
-  } catch (error) {
-    if (error?.code === "STORAGE_NOT_CONFIGURED") {
-      if (req.method === "GET") {
-        return json(res, 200, {
-          certificates: BASE_CERTIFICATES,
-          storage: "demo",
-          demoMode: true,
+    if (req.method === "PATCH") {
+      const access = await requireAdminAccess(req, res, { write: true });
+      if (!access.allowed) {
+        return json(res, access.status || 401, {
+          error:
+            access.status === 403
+              ? "This account does not have permission to update certificates"
+              : "Admin authentication required",
         });
       }
 
-      return json(res, 503, {
-        error: "Cloud storage is not configured",
+      const body = parseRequestBody(req.body) || {};
+      const serial = String(
+        req.query?.serial || body.serial || "",
+      ).trim().toUpperCase();
+
+      if (!serial) {
+        return json(res, 400, { error: "Certificate serial is required" });
+      }
+
+      const patch = normalizeCertificatePatch(body);
+      if (!patch) {
+        return json(res, 400, { error: "No valid certificate updates supplied" });
+      }
+
+      const current = await getCertificate(serial, {
+        organizationId: organizationIdFrom(access),
+      });
+
+      if (!current) {
+        return json(res, 404, { error: "Certificate not found" });
+      }
+
+      if (!storageConfig().configured) {
+        if (!isDemoMode()) {
+          return json(res, 503, { error: "Cloud storage is not configured" });
+        }
+
+        return json(res, 200, {
+          certificate: { ...current, ...patch, serial: current.serial },
+          storage: "demo",
+          persisted: false,
+        });
+      }
+
+      const updated = await updateCertificate(serial, patch, {
+        organizationId: organizationIdFrom(access),
+      });
+
+      if (!updated) {
+        return json(res, 404, { error: "Certificate not found" });
+      }
+
+      const action =
+        patch.status === "revoked"
+          ? "certificate.revoked"
+          : patch.status === "valid" && current.status === "revoked"
+            ? "certificate.restored"
+            : "certificate.updated";
+
+      await auditCertificate(access, action, updated, {
+        previousStatus: current.status,
+        newStatus: updated.status,
+        changedFields: Object.keys(patch),
+      });
+
+      return json(res, 200, {
+        certificate: updated,
+        storage: storageConfig().provider,
+        persisted: true,
+      });
+    }
+
+    res.setHeader("Allow", "GET, POST, PATCH");
+    return json(res, 405, { error: "Method not allowed" });
+  } catch (error) {
+    if (error?.code === "STORAGE_NOT_CONFIGURED") {
+      return json(res, 503, { error: "Cloud storage is not configured" });
+    }
+
+    if (
+      error?.code === "DATABASE_CONFLICT" ||
+      error?.code === "STORAGE_CONFLICT"
+    ) {
+      return json(res, 409, {
+        error: "Certificate serial already exists",
       });
     }
 
     console.error("certificate_api_error", error);
-    return json(res, 500, { error: "Storage request failed" });
+    return json(res, 500, { error: "Certificate request failed" });
   }
 };
