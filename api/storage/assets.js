@@ -5,6 +5,7 @@ const {
   databaseConfig,
   getDefaultOrganizationId,
   getOrganizationById,
+  updateOrganizationSettings,
   listCertificateTemplates,
   setActiveCertificateTemplate,
   deleteCertificateTemplate,
@@ -81,7 +82,14 @@ module.exports = async function handler(req, res) {
           ? {
               id: organization.id,
               name: organization.name,
+              displayName:
+                organization.display_name || organization.name,
               slug: organization.slug,
+              customDomain: organization.custom_domain || null,
+              primaryColor:
+                organization.primary_color || "#0B7783",
+              secondaryColor:
+                organization.secondary_color || "#0B2B34",
               hasLogo: Boolean(organization.logo_path),
               logoUrl: organization.logo_path
                 ? "/api/storage/logo?slug=" +
@@ -105,6 +113,50 @@ module.exports = async function handler(req, res) {
     const body = parseBody(req.body);
 
     if (req.method === "PATCH") {
+      if (body.organization && typeof body.organization === "object") {
+        const role = access.session?.membership?.role;
+        if (!access.session?.demoMode && !["owner", "admin"].includes(role)) {
+          return json(res, 403, {
+            error: "Only organization owners and admins can edit branding",
+          });
+        }
+
+        const settings = body.organization;
+        const colorPattern = /^#[0-9A-F]{6}$/i;
+
+        if (
+          settings.primaryColor &&
+          !colorPattern.test(String(settings.primaryColor))
+        ) {
+          return json(res, 400, { error: "Invalid primary color" });
+        }
+
+        if (
+          settings.secondaryColor &&
+          !colorPattern.test(String(settings.secondaryColor))
+        ) {
+          return json(res, 400, { error: "Invalid secondary color" });
+        }
+
+        const updated = await updateOrganizationSettings(
+          organizationId,
+          settings,
+        );
+
+        await logAudit({
+          organizationId,
+          actorUserId: access.session?.user?.id || null,
+          action: "organization.branding_updated",
+          entityType: "organization",
+          entityId: organizationId,
+          details: {
+            changedFields: Object.keys(settings),
+          },
+        }).catch(() => {});
+
+        return json(res, 200, { organization: updated });
+      }
+
       const templateId = String(body.templateId || "").trim();
       if (!templateId) {
         return json(res, 400, { error: "Template id is required" });
