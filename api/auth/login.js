@@ -7,7 +7,7 @@ const {
   getMembership,
   setSessionCookies,
   clearSessionCookies,
-} = require("../lib/auth");
+} = require("../../server/auth");
 
 function json(res, status, body) {
   res.statusCode = status;
