@@ -94,8 +94,10 @@ module.exports = async function handler(req, res) {
             certificateId: result?.id || null,
             serial,
             result: result?.status || "not_found",
-            source: String(req.query?.source || "serial").toLowerCase() === "qr"
-              ? "qr"
+            source: ["serial", "qr", "direct_link"].includes(
+              String(req.query?.source || "serial").toLowerCase(),
+            )
+              ? String(req.query?.source || "serial").toLowerCase()
               : "serial",
             userAgent: String(req.headers["user-agent"] || "").slice(0, 500),
           }).catch(() => {});
