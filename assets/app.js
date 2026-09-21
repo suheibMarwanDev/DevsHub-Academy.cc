@@ -702,14 +702,14 @@ const base = [
 
         banner.classList.add("is-valid");
         icon.textContent = "✓";
-        title.textContent = "Verified Certificate";
+        title.textContent = "سجل الشهادة مطابق وصالح";
         description.textContent =
-          "تم العثور على هذا الاعتماد ومطابقته مع السجل الرسمي للجهة المصدرة.";
+          "تم العثور على هذا الاعتماد في سجل DevsHub Academy العام.";
         pill.textContent = "VALID";
         pill.classList.add("status-valid");
         recordStatus.textContent = "✓ صالح";
         recordStatus.className = "record-valid";
-        recordMatch.textContent = "Verified";
+        recordMatch.textContent = "Matched";
       }
 
       function showCert(c) {
@@ -724,12 +724,6 @@ const base = [
         $("#certCourse").textContent = c.course;
         $("#certSerial").textContent = c.serial;
         $("#certDate").textContent = c.date;
-        const expiryRow = $("#certExpiryRow");
-        const expiryValue = $("#certExpiry");
-        if (expiryRow && expiryValue) {
-          expiryRow.hidden = !c.expiresAt;
-          expiryValue.textContent = c.expiresAt || "";
-        }
         $("#recordIdentity").textContent = c.serial;
         $("#certIssuer").textContent =
           c.issuer?.name || "DevsHub Academy.cc";
@@ -770,62 +764,11 @@ const base = [
 
       function setVerifyLoading(loading) {
         const button = $("#verifyBtn");
-        const progress = $("#verifyProgress");
-        const input = $("#serial");
-        const label = button?.querySelector(".verify-btn-label");
-        const icon = button?.querySelector(".verify-btn-icon");
-
-        if (button) {
-          button.disabled = loading;
-          button.classList.toggle("is-loading", loading);
-          button.setAttribute("aria-busy", String(loading));
-        }
-
-        if (label) {
-          label.textContent = loading
-            ? "جاري التحقق…"
-            : "تحقق من الشهادة";
-        }
-
-        if (icon) {
-          icon.textContent = loading ? "…" : "→";
-        }
-
-        if (progress) progress.hidden = !loading;
-        if (input) input.setAttribute("aria-busy", String(loading));
-      }
-
-      function setSerialFeedback(message = "", type = "error") {
-        const feedback = $("#serialFeedback");
-        const input = $("#serial");
-        if (!feedback || !input) return;
-
-        feedback.textContent = message;
-        feedback.hidden = !message;
-        feedback.classList.remove("is-info", "is-success");
-        if (message && type === "info") feedback.classList.add("is-info");
-        if (message && type === "success") feedback.classList.add("is-success");
-        input.setAttribute(
-          "aria-invalid",
-          String(Boolean(message) && type === "error"),
-        );
-      }
-
-      function showVerificationError({
-        title = "Certificate Not Found",
-        message =
-          "لم نتمكن من مطابقة هذا الرقم مع سجل شهادة متاح. تأكد من Certificate ID ثم حاول مرة أخرى.",
-        serial = "",
-      } = {}) {
-        const modal = $("#resultModal");
-        const titleNode = $("#resultModalTitle");
-        const messageNode = $("#resultModalMessage");
-        const badSerial = $("#badSerial");
-
-        if (titleNode) titleNode.textContent = title;
-        if (messageNode) messageNode.textContent = message;
-        if (badSerial) badSerial.textContent = serial;
-        modal?.classList.add("show");
+        button.disabled = loading;
+        button.classList.toggle("is-loading", loading);
+        button.innerHTML = loading
+          ? 'جاري مطابقة السجل <span>•••</span>'
+          : 'تحقق من السجل <span>↗</span>';
       }
 
       async function fetchCertificateBySerial(serial, source = "serial") {
@@ -855,21 +798,12 @@ const base = [
       async function verifySerial(value, source = "serial") {
         const serial = String(value || "").trim().toUpperCase();
         if (!serial) {
-          setSerialFeedback(
-            "أدخل Certificate ID الموجود على الشهادة قبل المتابعة.",
-            "error",
-          );
-          showVerificationError({
-            title: "Certificate ID Required",
-            message:
-              "أدخل الرقم التسلسلي كما يظهر على الشهادة ثم حاول التحقق مرة أخرى.",
-            serial: "لم يتم إدخال رقم",
-          });
+          $("#badSerial").textContent = "اكتب الرقم التسلسلي أولاً";
+          $("#resultModal").classList.add("show");
           return false;
         }
 
         $("#serial").value = serial;
-        setSerialFeedback("", "info");
         setVerifyLoading(true);
 
         try {
@@ -887,49 +821,16 @@ const base = [
 
           if (certificate) {
             const existing = certs.findIndex(
-              (item) =>
-                item.serial?.toUpperCase() ===
-                certificate.serial?.toUpperCase(),
+              (item) => item.serial?.toUpperCase() === certificate.serial?.toUpperCase(),
             );
-            if (existing >= 0) {
-              certs[existing] = {
-                ...certs[existing],
-                ...certificate,
-              };
-            } else {
-              certs.unshift(certificate);
-            }
-
-            setSerialFeedback(
-              "تم العثور على السجل الرسمي.",
-              "success",
-            );
+            if (existing >= 0) certs[existing] = { ...certs[existing], ...certificate };
+            else certs.unshift(certificate);
             showCert(certificate);
             return true;
           }
 
-          setSerialFeedback(
-            "لم يتم العثور على شهادة مطابقة لهذا Certificate ID.",
-            "error",
-          );
-          showVerificationError({
-            title: "Certificate Not Found",
-            message:
-              "لم نتمكن من مطابقة هذا الرقم مع سجل شهادة متاح. تأكد من Certificate ID ثم حاول مرة أخرى.",
-            serial,
-          });
-          return false;
-        } catch (error) {
-          setSerialFeedback(
-            "تعذر إكمال التحقق حالياً. حاول مرة أخرى بعد قليل.",
-            "error",
-          );
-          showVerificationError({
-            title: "Unable to Verify Certificate",
-            message:
-              "تعذر الوصول إلى خدمة التحقق حالياً. لم يتم تغيير حالة الشهادة؛ حاول مرة أخرى بعد قليل.",
-            serial,
-          });
+          $("#badSerial").textContent = serial;
+          $("#resultModal").classList.add("show");
           return false;
         } finally {
           setVerifyLoading(false);
@@ -1070,12 +971,10 @@ const base = [
 
       $("#demoSerialBtn").onclick = () => {
         $("#serial").value = "DVH-2026-78421";
-        setSerialFeedback("", "info");
         $("#serial").focus();
       };
 
       $("#verifyBtn").onclick = () => verifySerial($("#serial").value);
-      $("#serial").oninput = () => setSerialFeedback("", "info");
       $("#serial").onkeydown = (e) => {
         if (e.key === "Enter") {
           e.preventDefault();
@@ -2004,12 +1903,8 @@ const base = [
           button.textContent = "حفظ وإنشاء سيريال";
         }
       };
-      $("#closeResult").onclick = () => {
+      $("#closeResult").onclick = () =>
         $("#resultModal").classList.remove("show");
-        if (document.body.dataset.view === "verify") {
-          setTimeout(() => $("#serial")?.focus(), 80);
-        }
-      };
       let qrScanFrame = 0;
 
       function extractSerialFromQr(raw) {
