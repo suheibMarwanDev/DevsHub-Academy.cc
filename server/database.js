@@ -325,6 +325,48 @@ async function getOrganizationBySlug(slug) {
   return Array.isArray(rows) && rows[0] ? rows[0] : null;
 }
 
+async function updateOrganizationSettings(
+  organizationId,
+  settings,
+) {
+  const body = {};
+
+  if ("displayName" in settings) {
+    body.display_name = String(settings.displayName || "")
+      .trim()
+      .slice(0, 120);
+  }
+
+  if ("customDomain" in settings) {
+    const domain = String(settings.customDomain || "")
+      .trim()
+      .toLowerCase()
+      .replace(/^https?:\/\//, "")
+      .replace(/\/$/, "")
+      .slice(0, 253);
+    body.custom_domain = domain || null;
+  }
+
+  if ("primaryColor" in settings) {
+    body.primary_color = settings.primaryColor;
+  }
+
+  if ("secondaryColor" in settings) {
+    body.secondary_color = settings.secondaryColor;
+  }
+
+  const rows = await supabaseRequest(
+    "organizations?id=eq." + encodeURIComponent(organizationId),
+    {
+      method: "PATCH",
+      headers: { Prefer: "return=representation" },
+      body: JSON.stringify(body),
+    },
+  );
+
+  return Array.isArray(rows) && rows[0] ? rows[0] : null;
+}
+
 async function updateOrganizationLogoPath(organizationId, logoPath) {
   const rows = await supabaseRequest(
     "organizations?id=eq." + encodeURIComponent(organizationId),
@@ -544,6 +586,7 @@ module.exports = {
   upsertDatabaseCertificate,
   getOrganizationById,
   getOrganizationBySlug,
+  updateOrganizationSettings,
   updateOrganizationLogoPath,
   listCertificateTemplates,
   createCertificateTemplate,
