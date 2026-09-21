@@ -560,9 +560,13 @@ const base = [
         document.body.dataset.view = v;
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
-      function verificationUrlFor(serial) {
+      function verificationUrlFor(serial, issuer = null) {
+        const origin = issuer?.customDomain
+          ? "https://" + issuer.customDomain
+          : location.origin;
+
         return (
-          location.origin +
+          origin +
           location.pathname +
           "#certificate/" +
           encodeURIComponent(serial)
@@ -574,7 +578,10 @@ const base = [
         const urlTarget = $("#officialQrUrl");
         if (!target || !urlTarget) return;
 
-        const url = verificationUrlFor(certificate.serial);
+        const url = verificationUrlFor(
+          certificate.serial,
+          certificate.issuer,
+        );
         urlTarget.textContent = url;
         target.replaceChildren();
 
