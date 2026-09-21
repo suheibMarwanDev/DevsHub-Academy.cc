@@ -4,8 +4,9 @@ const {
   authConfig,
   isDemoMode,
   signInWithPassword,
-  getMembership,
+  getMemberships,
   setSessionCookies,
+  setActiveOrganizationCookie,
   clearSessionCookies,
 } = require("../../server/auth");
 
@@ -59,7 +60,8 @@ module.exports = async function handler(req, res) {
 
   try {
     const session = await signInWithPassword(email, password);
-    const membership = await getMembership(session.user?.id);
+    const memberships = await getMemberships(session.user?.id);
+    const membership = memberships[0] || null;
 
     if (!membership) {
       clearSessionCookies(res);
@@ -69,6 +71,10 @@ module.exports = async function handler(req, res) {
     }
 
     setSessionCookies(res, session);
+    setActiveOrganizationCookie(
+      res,
+      membership.organization?.slug || "",
+    );
 
     return json(res, 200, {
       authenticated: true,
@@ -78,6 +84,7 @@ module.exports = async function handler(req, res) {
         email: session.user.email,
       },
       membership,
+      memberships,
     });
   } catch (error) {
     clearSessionCookies(res);
