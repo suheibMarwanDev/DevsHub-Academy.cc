@@ -14,8 +14,13 @@ const {
   fileStorageConfig,
   removeObject,
 } = require("../../server/file-storage");
+const {
+  requestOriginAllowed,
+  applyApiSecurityHeaders,
+} = require("../../server/security");
 
 function json(res, status, body) {
+  applyApiSecurityHeaders(res);
   res.statusCode = status;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Cache-Control", "no-store");
@@ -43,6 +48,9 @@ async function organizationIdFrom(access) {
 module.exports = async function handler(req, res) {
   try {
     const write = req.method !== "GET";
+    if (write && !requestOriginAllowed(req)) {
+      return json(res, 403, { error: "Invalid request origin" });
+    }
     const access = await requireAdminAccess(req, res, { write });
 
     if (!access.allowed) {
