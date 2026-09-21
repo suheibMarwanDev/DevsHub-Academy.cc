@@ -54,23 +54,10 @@ function isDemoMode() {
   return String(process.env.DEMO_MODE || "true").toLowerCase() !== "false";
 }
 
-function canWrite(req) {
-  if (isDemoMode()) return true;
-
-  const expected = process.env.ADMIN_API_TOKEN || "";
-  if (!expected) return false;
-
-  const supplied =
-    req.headers["x-admin-token"] ||
-    String(req.headers.authorization || "").replace(/^Bearer\s+/i, "");
-
-  return supplied === expected;
-}
 
 module.exports = {
   BASE_CERTIFICATES,
   normalizeCertificate,
   parseRequestBody,
   isDemoMode,
-  canWrite,
 };
