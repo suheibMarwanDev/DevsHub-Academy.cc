@@ -29,6 +29,25 @@ function json(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
+function clientCertificate(certificate) {
+  if (!certificate) return null;
+
+  const { pdfPath, ...client } = certificate;
+
+  if (pdfPath) {
+    client.pdf =
+      "/api/storage/certificate?serial=" +
+      encodeURIComponent(certificate.serial);
+    client.hasPdf = true;
+  } else if (client.pdf) {
+    client.hasPdf = true;
+  } else {
+    client.hasPdf = false;
+  }
+
+  return client;
+}
+
 function organizationIdFrom(access) {
   return access?.session?.membership?.organization?.id || null;
 }
@@ -104,7 +123,7 @@ module.exports = async function handler(req, res) {
         }
 
         return json(res, result ? 200 : 404, {
-          certificate: result,
+          certificate: clientCertificate(result),
           storage: storageConfig().provider,
         });
       }
@@ -154,7 +173,7 @@ module.exports = async function handler(req, res) {
       }
 
       return json(res, 200, {
-        certificates,
+        certificates: certificates.map(clientCertificate),
         count: certificates.length,
         filters: { q, status: status || null, limit },
         storage: storageConfig().provider,
@@ -214,7 +233,7 @@ module.exports = async function handler(req, res) {
       });
 
       return json(res, 201, {
-        certificate: created,
+        certificate: clientCertificate(created),
         storage: storageConfig().provider,
         persisted: true,
       });
@@ -287,7 +306,7 @@ module.exports = async function handler(req, res) {
       });
 
       return json(res, 200, {
-        certificate: updated,
+        certificate: clientCertificate(updated),
         storage: storageConfig().provider,
         persisted: true,
       });
