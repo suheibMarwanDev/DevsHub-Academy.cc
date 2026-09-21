@@ -3756,3 +3756,208 @@ body[data-view="certificate"] {
     align-items: flex-start;
   }
 }
+
+
+/* PRODUCT COMPLETION UX v1 */
+.org-switcher {
+  min-height: 42px;
+  max-width: 220px;
+  padding: 0 32px 0 10px;
+  border: 1px solid #d7e2e5;
+  border-radius: 6px;
+  background: #fff;
+  color: #355761;
+  font: 700 9px/1 Cairo, sans-serif;
+}
+
+.org-switcher:focus {
+  outline: none;
+  border-color: #0e7280;
+  box-shadow: 0 0 0 3px #0e728014;
+}
+
+.official-qr-card {
+  display: grid;
+  grid-template-columns: 132px 1fr;
+  align-items: center;
+  gap: 16px;
+  margin: 16px 0;
+  padding: 15px;
+  border: 1px solid #dce6e4;
+  border-radius: 9px;
+  background: #f9fbfa;
+}
+
+#officialQr {
+  display: grid;
+  width: 132px;
+  height: 132px;
+  place-items: center;
+  padding: 6px;
+  border: 1px solid #dce6e4;
+  border-radius: 7px;
+  background: #fff;
+}
+
+#officialQr canvas,
+#officialQr img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.official-qr-card > div:last-child {
+  min-width: 0;
+}
+
+.official-qr-card b {
+  display: block;
+  color: #23464e;
+  font-size: 10px;
+}
+
+.official-qr-card span {
+  display: block;
+  margin-top: 4px;
+  color: #7d8f93;
+  font-size: 8px;
+  line-height: 1.7;
+}
+
+.official-qr-card code {
+  display: block;
+  max-width: 100%;
+  margin-top: 10px;
+  padding: 7px 8px;
+  overflow: hidden;
+  border-radius: 5px;
+  background: #eef4f3;
+  color: #567178;
+  font: 7px/1.5 monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: ltr;
+}
+
+.bulk-sample {
+  width: 100%;
+  margin: 2px 0 12px;
+}
+
+.bulk-preview {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.bulk-preview-list {
+  display: grid;
+  gap: 5px;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.bulk-preview-list > div {
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 9px;
+  border: 1px solid #e0e7e7;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.bulk-preview-list b {
+  color: #0b7783;
+  font: 800 8px/1 monospace;
+}
+
+.bulk-preview-list span {
+  min-width: 0;
+  overflow: hidden;
+  color: #506970;
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.report-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.report-metric-card {
+  display: grid;
+  gap: 5px;
+  padding: 14px;
+  border: 1px solid #dce5e5;
+  border-radius: 8px;
+  background: #f9fbfb;
+}
+
+.report-metric-card span {
+  color: #809095;
+  font-size: 8px;
+}
+
+.report-metric-card b {
+  color: #173940;
+  font-size: 20px;
+}
+
+.report-chart-wrap {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid #dce5e5;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.report-chart-wrap > b {
+  display: block;
+  margin-bottom: 14px;
+  color: #34555d;
+  font-size: 9px;
+}
+
+.report-bar-chart {
+  display: flex;
+  align-items: end;
+  gap: 3px;
+  height: 140px;
+  padding-top: 8px;
+  border-bottom: 1px solid #dce4e4;
+}
+
+.report-bar-chart i {
+  flex: 1 1 0;
+  min-width: 3px;
+  max-width: 12px;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(180deg, #21a6b3, #0b7783);
+  opacity: .8;
+}
+
+@media (max-width: 720px) {
+  .org-switcher {
+    order: -1;
+    width: 100%;
+    max-width: none;
+  }
+
+  .official-qr-card {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .official-qr-card code {
+    width: 100%;
+  }
+
+  .report-metric-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
