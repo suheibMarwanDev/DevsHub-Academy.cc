@@ -16,7 +16,7 @@ test("normalizePrefix removes unsafe characters", () => {
 
 test("generateSerial follows official certificate pattern", () => {
   const serial = generateSerial("DVH", new Date("2026-09-21T00:00:00Z"));
-  assert.match(serial, /^DVH-2026-\d{6}$/);
+  assert.match(serial, /^DVH-2026-\d{8}$/);
 });
 
 test("normalizeCertificate validates and normalizes certificate data", () => {
