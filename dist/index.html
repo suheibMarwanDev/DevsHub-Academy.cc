@@ -14,6 +14,8 @@
     />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="assets/styles.css" />
     
   
@@ -232,6 +234,7 @@
                   <p id="adminSubheading">أصدر واعرض وتحقق من جميع الشهادات من مكان واحد.</p>
                 </div>
                 <div class="admin-actions">
+                  <select class="org-switcher" id="orgSwitcher" aria-label="المؤسسة النشطة" hidden></select>
                   <button class="auth-logout" id="logoutBtn" type="button" hidden>تسجيل الخروج</button>
                   <button class="primary add" id="addOpen">＋ إضافة شهادة</button>
                 </div>
@@ -239,8 +242,8 @@
               <div class="stats">
                 <div class="stat"><span>إجمالي الشهادات</span><b id="total">1</b><i>▧</i></div>
                 <div class="stat"><span>شهادات موثّقة</span><b id="verified">1</b><i>✓</i></div>
-                <div class="stat"><span>تحققات اليوم</span><b>86</b><i>↗</i></div>
-                <div class="stat"><span>قيد المراجعة</span><b>04</b><i>◌</i></div>
+                <div class="stat"><span>تحققات اليوم</span><b id="verificationsToday">0</b><i>↗</i></div>
+                <div class="stat"><span>ملغاة / منتهية</span><b id="attentionCount">0</b><i>◌</i></div>
               </div>
               <div class="box">
                 <div class="toolbar">
@@ -267,7 +270,7 @@
           <div class="credential-result-page public-record-page">
             <div class="result-topbar">
               <button class="back" id="backBtn">← تحقق من شهادة أخرى</button>
-              <div class="result-issuer"><span>◆</span><b>DevsHub Academy.cc</b><small>Public Verification</small></div>
+              <div class="result-issuer"><span>◆</span><img id="certIssuerLogo" alt="" hidden /><b>DevsHub Academy.cc</b><small>Public Verification</small></div>
             </div>
 
             <div class="public-status-banner" id="statusBanner">
@@ -327,10 +330,19 @@
                 <p class="course" id="certCourse">Web Development Essentials</p>
 
                 <div class="credential-record-list">
-                  <div><span>الجهة المصدرة</span><b>DevsHub Academy.cc</b></div>
+                  <div><span>الجهة المصدرة</span><b id="certIssuer">DevsHub Academy.cc</b></div>
                   <div><span>Certificate ID</span><b id="certSerial"></b></div>
                   <div><span>تاريخ الإصدار</span><b id="certDate"></b></div>
                   <div><span>حالة السجل</span><b class="record-valid" id="recordStatus">✓ صالح</b></div>
+                </div>
+
+                <div class="official-qr-card">
+                  <div id="officialQr" aria-label="Official certificate QR"></div>
+                  <div>
+                    <b>Official verification QR</b>
+                    <span>امسح الرمز للوصول مباشرة إلى هذا السجل الرسمي.</span>
+                    <code id="officialQrUrl"></code>
+                  </div>
                 </div>
 
                 <div class="record-note public-scope-note">
@@ -343,6 +355,7 @@
 
                 <div class="record-actions">
                   <button class="primary download" id="downloadBtn">⇩ تنزيل الشهادة PDF</button>
+                  <button class="soft" id="downloadQrBtn">▣ تنزيل QR الرسمي</button>
                   <button class="soft pdf-open" id="openPdfBtn">↗ فتح PDF في نافذة جديدة</button>
                 </div>
               </aside>
