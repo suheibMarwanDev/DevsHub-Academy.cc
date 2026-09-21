@@ -231,7 +231,10 @@
                   <h1 id="adminHeading">لوحة إدارة الشهادات</h1>
                   <p id="adminSubheading">أصدر واعرض وتحقق من جميع الشهادات من مكان واحد.</p>
                 </div>
-                <button class="primary add" id="addOpen">＋ إضافة شهادة</button>
+                <div class="admin-actions">
+                  <button class="auth-logout" id="logoutBtn" type="button" hidden>تسجيل الخروج</button>
+                  <button class="primary add" id="addOpen">＋ إضافة شهادة</button>
+                </div>
               </div>
               <div class="stats">
                 <div class="stat"><span>إجمالي الشهادات</span><b id="total">1</b><i>▧</i></div>
@@ -354,6 +357,56 @@
           </div>
         </section>
        </main>
+    </div>
+
+    <div class="modal auth-modal" id="loginModal" aria-hidden="true">
+      <div class="dialog auth-dialog" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+        <div class="auth-brand">
+          <span>◆</span>
+          <div>
+            <small>DEVSHUB ACADEMY</small>
+            <b>Admin Access</b>
+          </div>
+        </div>
+        <span class="auth-kicker">SECURE ADMIN SESSION</span>
+        <h2 id="loginTitle">تسجيل دخول الإدارة</h2>
+        <p class="auth-intro">استخدم حساب الإدارة المرتبط بالمؤسسة للوصول إلى لوحة الشهادات.</p>
+
+        <form id="loginForm" class="auth-form">
+          <div class="field">
+            <label for="loginEmail">البريد الإلكتروني</label>
+            <input
+              id="loginEmail"
+              type="email"
+              autocomplete="username"
+              inputmode="email"
+              placeholder="admin@example.com"
+              required
+            />
+          </div>
+          <div class="field">
+            <label for="loginPassword">كلمة المرور</label>
+            <input
+              id="loginPassword"
+              type="password"
+              autocomplete="current-password"
+              placeholder="••••••••"
+              required
+            />
+          </div>
+          <p class="auth-error" id="loginError" role="alert" hidden></p>
+          <button class="primary auth-submit" id="loginBtn" type="submit">
+            دخول إلى الإدارة
+          </button>
+        </form>
+
+        <button class="cancel auth-cancel" id="closeLogin" type="button">العودة إلى التحقق</button>
+
+        <div class="auth-security-note">
+          <span>🔒</span>
+          <p><b>جلسة آمنة</b><small>بيانات الجلسة تُحفظ في HttpOnly cookies ولا يتم تخزين رمز الدخول داخل المتصفح.</small></p>
+        </div>
+      </div>
     </div>
     <div class="modal" id="addModal">
       <div class="dialog">
