@@ -5,6 +5,7 @@ const {
   listDatabaseCertificates,
   getDatabaseCertificate,
   createDatabaseCertificate,
+  createDatabaseCertificates,
   updateDatabaseCertificate,
   upsertDatabaseCertificate,
 } = require("./database");
@@ -191,6 +192,16 @@ async function createRedisCertificate(certificate) {
   return certificate;
 }
 
+async function createRedisCertificates(certificates) {
+  const created = [];
+
+  for (const certificate of certificates) {
+    created.push(await createRedisCertificate(certificate));
+  }
+
+  return created;
+}
+
 async function updateRedisCertificate(serial, patch) {
   const existing = await getRedisCertificate(serial);
   if (!existing) return null;
@@ -249,6 +260,14 @@ async function createCertificate(certificate, options = {}) {
   return createRedisCertificate(certificate);
 }
 
+async function createCertificates(certificates, options = {}) {
+  if (databaseConfig().configured) {
+    return createDatabaseCertificates(certificates, options);
+  }
+
+  return createRedisCertificates(certificates);
+}
+
 async function updateCertificate(serial, patch, options = {}) {
   if (databaseConfig().configured) {
     return updateDatabaseCertificate(serial, patch, options);
@@ -270,6 +289,7 @@ module.exports = {
   listCertificates,
   getCertificate,
   createCertificate,
+  createCertificates,
   updateCertificate,
   upsertCertificate,
 };
