@@ -3603,3 +3603,156 @@ body[data-view="certificate"] {
     flex-wrap: wrap;
   }
 }
+
+
+/* CLOUD STORAGE ADMIN UI v1 */
+.storage-message {
+  padding: 11px 12px;
+  border: 1px solid #dbe5e7;
+  border-radius: 7px;
+  background: #f7fafb;
+  color: #60777e;
+  font-size: 9px;
+  line-height: 1.7;
+}
+
+.storage-message-error {
+  border-color: #edcccc;
+  background: #fff5f5;
+  color: #9b4343;
+}
+
+.storage-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 12px;
+  color: #4b656d;
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.storage-checkbox input {
+  width: 16px !important;
+  height: 16px !important;
+  min-height: 0 !important;
+  accent-color: #0e7280;
+}
+
+.storage-template-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 13px;
+  max-height: 290px;
+  overflow: auto;
+}
+
+.storage-template-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px;
+  border: 1px solid #dce6e8;
+  border-radius: 7px;
+  background: #fff;
+}
+
+.storage-template-card.is-active {
+  border-color: #aad9d2;
+  background: #f3fbf8;
+  box-shadow: inset 3px 0 0 #1b9a7d;
+}
+
+.storage-template-card > div:first-child {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.storage-template-card b {
+  color: #294b53;
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.storage-template-card small {
+  color: #839397;
+  font-size: 7px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+
+.storage-template-card > div:last-child {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+}
+
+.storage-template-card button:disabled {
+  cursor: default;
+  opacity: .55;
+}
+
+.storage-delete {
+  border-color: #ecd2d2 !important;
+  background: #fff8f8 !important;
+  color: #9a4848 !important;
+}
+
+.storage-logo-preview {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 78px;
+  margin-bottom: 14px;
+  padding: 13px;
+  border: 1px solid #dce5e7;
+  border-radius: 8px;
+  background: #f8fafb;
+}
+
+.storage-logo-preview img {
+  width: 58px;
+  height: 58px;
+  padding: 5px;
+  border: 1px solid #dfe7e9;
+  border-radius: 9px;
+  background: #fff;
+  object-fit: contain;
+}
+
+.storage-logo-preview > div:not(.storage-message) {
+  display: grid;
+  gap: 3px;
+}
+
+.storage-logo-preview b {
+  color: #294a52;
+  font-size: 11px;
+}
+
+.storage-logo-preview small {
+  color: #839498;
+  font-size: 8px;
+}
+
+@media (max-width: 720px) {
+  .storage-template-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .storage-template-card > div:last-child {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .storage-logo-preview {
+    align-items: flex-start;
+  }
+}
