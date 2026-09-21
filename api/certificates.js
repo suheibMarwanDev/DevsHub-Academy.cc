@@ -35,7 +35,7 @@ module.exports = async function handler(req, res) {
 
         return json(res, certificate || fallback ? 200 : 404, {
           certificate: certificate || fallback,
-          storage: storageConfig().configured ? "cloud" : "demo",
+          storage: storageConfig().provider,
         });
       }
 
@@ -44,7 +44,7 @@ module.exports = async function handler(req, res) {
 
       return json(res, 200, {
         certificates,
-        storage: storageConfig().configured ? "cloud" : "demo",
+        storage: storageConfig().provider,
         demoMode: isDemoMode(),
       });
     }
@@ -74,7 +74,7 @@ module.exports = async function handler(req, res) {
       await upsertCertificate(cert);
       return json(res, 200, {
         certificate: cert,
-        storage: "cloud",
+        storage: storageConfig().provider,
       });
     }
 
