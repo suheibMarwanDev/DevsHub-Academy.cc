@@ -38,21 +38,49 @@ const base = [
       const STORAGE_API = "/api/storage";
       let cloudSyncAvailable = false;
       let storageProvider = "demo";
+      let dashboardMetrics = null;
       let authState = {
         checked: false,
         authenticated: false,
         demoMode: true,
         user: null,
         membership: null,
+        memberships: [],
       };
 
       function updateAuthUi() {
         const logout = $("#logoutBtn");
-        if (!logout) return;
+        const switcher = $("#orgSwitcher");
+        if (!logout || !switcher) return;
+
         logout.hidden =
           authState.demoMode ||
           !authState.authenticated ||
           !authState.user;
+
+        const memberships = Array.isArray(authState.memberships)
+          ? authState.memberships
+          : [];
+
+        switcher.replaceChildren();
+        memberships.forEach((item) => {
+          const option = document.createElement("option");
+          option.value = item.organization?.slug || "";
+          option.textContent =
+            item.organization?.display_name ||
+            item.organization?.name ||
+            item.organization?.slug ||
+            "Organization";
+          option.selected =
+            item.organization?.slug ===
+            authState.membership?.organization?.slug;
+          switcher.appendChild(option);
+        });
+
+        switcher.hidden =
+          authState.demoMode ||
+          !authState.authenticated ||
+          memberships.length < 2;
       }
 
       function showLoginError(message) {
@@ -89,6 +117,11 @@ const base = [
             demoMode: Boolean(session.demoMode),
             user: session.user || null,
             membership: session.membership || null,
+            memberships: Array.isArray(session.memberships)
+              ? session.memberships
+              : session.membership
+                ? [session.membership]
+                : [],
             configurationRequired: Boolean(session.configurationRequired),
           };
         } catch (error) {
@@ -98,6 +131,7 @@ const base = [
             demoMode: false,
             user: null,
             membership: null,
+            memberships: [],
             error: true,
           };
         }
@@ -114,6 +148,7 @@ const base = [
           location.hash = "admin";
           show("admin");
           await hydrateRemoteCerts();
+          await loadDashboardMetrics();
           return true;
         }
 
@@ -154,6 +189,31 @@ const base = [
 
         cloudSyncAvailable = Boolean(result.persisted);
         return result.certificate;
+      }
+
+      async function issueBulkCertificates(rows) {
+        const response = await fetch(CERT_API, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({ bulk: rows }),
+        });
+
+        const result = await response.json().catch(() => ({}));
+        storageProvider = result.storage || storageProvider;
+
+        if (!response.ok || !Array.isArray(result.certificates)) {
+          throw new Error(
+            result.row
+              ? (result.error || "بيانات غير صالحة") +
+                  " (الصف " +
+                  result.row +
+                  ")"
+              : result.error || "تعذر الإصدار الجماعي.",
+          );
+        }
+
+        return result.certificates;
       }
 
       async function updateCertificateRemote(serial, patch) {
@@ -249,6 +309,24 @@ const base = [
         return payload;
       }
 
+      async function updateOrganizationBranding(settings) {
+        const response = await fetch(STORAGE_API + "/assets", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({ organization: settings }),
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || !payload.organization) {
+          throw new Error(
+            payload.error || "تعذر حفظ هوية المؤسسة.",
+          );
+        }
+
+        return payload.organization;
+      }
+
       async function setActiveTemplate(templateId) {
         const response = await fetch(STORAGE_API + "/assets", {
           method: "PATCH",
@@ -319,6 +397,58 @@ const base = [
           cloudSyncAvailable = false;
           render();
         }
+      }
+
+      function updateDashboardStats() {
+        const total = $("#total");
+        const verified = $("#verified");
+        const today = $("#verificationsToday");
+        const attention = $("#attentionCount");
+
+        if (dashboardMetrics && storageProvider !== "demo") {
+          total.textContent =
+            dashboardMetrics.certificatesTotal ?? certs.length;
+          verified.textContent =
+            dashboardMetrics.validCertificates ??
+            certs.filter((item) => (item.status || "valid") === "valid").length;
+          today.textContent =
+            dashboardMetrics.verificationsToday ?? 0;
+          attention.textContent =
+            (Number(dashboardMetrics.revokedCertificates || 0) +
+              Number(dashboardMetrics.expiredCertificates || 0));
+          return;
+        }
+
+        total.textContent = certs.length;
+        verified.textContent = certs.filter(
+          (certificate) => (certificate.status || "valid") === "valid",
+        ).length;
+        today.textContent = "0";
+        attention.textContent = certs.filter((certificate) =>
+          ["revoked", "expired"].includes(
+            String(certificate.status || "valid"),
+          ),
+        ).length;
+      }
+
+      async function loadDashboardMetrics() {
+        try {
+          const response = await fetch(
+            CERT_API + "?report=dashboard",
+            {
+              cache: "no-store",
+              credentials: "same-origin",
+            },
+          );
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error("metrics unavailable");
+          dashboardMetrics = payload.metrics || null;
+        } catch (error) {
+          dashboardMetrics = null;
+        }
+
+        updateDashboardStats();
+        return dashboardMetrics;
       }
 
       function statusMeta(status) {
@@ -415,10 +545,7 @@ const base = [
             rows.appendChild(tr);
           });
 
-        $("#total").textContent = certs.length;
-        $("#verified").textContent = certs.filter(
-          (certificate) => (certificate.status || "valid") === "valid",
-        ).length;
+        updateDashboardStats();
       }
 
       function find(s) {
@@ -433,6 +560,48 @@ const base = [
         document.body.dataset.view = v;
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
+      function verificationUrlFor(serial, issuer = null) {
+        const origin = issuer?.customDomain
+          ? "https://" + issuer.customDomain
+          : location.origin;
+
+        return (
+          origin +
+          location.pathname +
+          "#certificate/" +
+          encodeURIComponent(serial)
+        );
+      }
+
+      function renderOfficialQr(certificate) {
+        const target = $("#officialQr");
+        const urlTarget = $("#officialQrUrl");
+        if (!target || !urlTarget) return;
+
+        const url = verificationUrlFor(
+          certificate.serial,
+          certificate.issuer,
+        );
+        urlTarget.textContent = url;
+        target.replaceChildren();
+
+        if (window.QRCode) {
+          new window.QRCode(target, {
+            text: url,
+            width: 132,
+            height: 132,
+            colorDark: "#0b2b34",
+            colorLight: "#ffffff",
+            correctLevel:
+              window.QRCode.CorrectLevel?.H ?? 2,
+          });
+        } else {
+          const fallback = document.createElement("code");
+          fallback.textContent = certificate.serial;
+          target.appendChild(fallback);
+        }
+      }
+
       function buildCertificatePdf(c) {
         const { jsPDF } = window.jspdf;
         let d = new jsPDF({ orientation: "landscape" });
@@ -440,7 +609,9 @@ const base = [
         d.rect(0, 0, 297, 38, "F");
         d.setTextColor(255);
         d.setFontSize(24);
-        d.text("DevsHub Academy.cc - Certificate of Completion", 148, 24, { align: "center" });
+        const issuerName =
+          c.issuer?.name || "DevsHub Academy.cc";
+        d.text(issuerName + " - Certificate of Completion", 148, 24, { align: "center" });
         d.setTextColor(30, 45, 70);
         d.setFontSize(18);
         d.text("This certifies that", 148, 65, { align: "center" });
@@ -452,7 +623,27 @@ const base = [
         d.text(c.course, 148, 126, { align: "center" });
         d.setFontSize(12);
         d.text("Certificate serial: " + c.serial, 148, 157, { align: "center" });
-        d.text("Issued: " + c.date + " | Verified by DevsHub Academy.cc", 148, 168, { align: "center" });
+        d.text("Issued: " + c.date + " | Verified by " + issuerName, 148, 168, { align: "center" });
+
+        const qrCanvas = $("#officialQr canvas");
+        const qrImage = $("#officialQr img");
+        try {
+          if (qrCanvas) {
+            d.addImage(
+              qrCanvas.toDataURL("image/png"),
+              "PNG",
+              250,
+              145,
+              26,
+              26,
+            );
+          } else if (qrImage?.src) {
+            d.addImage(qrImage.src, "PNG", 250, 145, 26, 26);
+          }
+        } catch (error) {}
+
+        d.setFontSize(7);
+        d.text("Scan to verify", 263, 176, { align: "center" });
         return d;
       }
       function loadPdfPreview(c) {
@@ -534,8 +725,39 @@ const base = [
         $("#certSerial").textContent = c.serial;
         $("#certDate").textContent = c.date;
         $("#recordIdentity").textContent = c.serial;
+        $("#certIssuer").textContent =
+          c.issuer?.name || "DevsHub Academy.cc";
+        const resultIssuer = document.querySelector(
+          ".result-issuer b",
+        );
+        if (resultIssuer) {
+          resultIssuer.textContent =
+            c.issuer?.name || "DevsHub Academy.cc";
+        }
+
+        const issuerLogo = $("#certIssuerLogo");
+        if (issuerLogo) {
+          if (c.issuer?.logoUrl) {
+            issuerLogo.src = c.issuer.logoUrl;
+            issuerLogo.hidden = false;
+          } else {
+            issuerLogo.hidden = true;
+            issuerLogo.removeAttribute("src");
+          }
+        }
+
+        document.documentElement.style.setProperty(
+          "--issuer-primary",
+          c.issuer?.primaryColor || "#0B7783",
+        );
+        document.documentElement.style.setProperty(
+          "--issuer-secondary",
+          c.issuer?.secondaryColor || "#0B2B34",
+        );
+
         applyPublicStatus(c);
         loadPdfPreview(c);
+        renderOfficialQr(c);
         location.hash = "certificate/" + encodeURIComponent(c.serial);
         show("certificate");
       }
@@ -659,12 +881,18 @@ const base = [
             demoMode: Boolean(payload.demoMode),
             user: payload.user || null,
             membership: payload.membership || null,
+            memberships: Array.isArray(payload.memberships)
+              ? payload.memberships
+              : payload.membership
+                ? [payload.membership]
+                : [],
           };
           updateAuthUi();
           closeLoginModal();
           location.hash = "admin";
           show("admin");
           await hydrateRemoteCerts();
+          await loadDashboardMetrics();
           $("#loginPassword").value = "";
         } catch (error) {
           showLoginError(error.message || "تعذر تسجيل الدخول.");
@@ -680,6 +908,47 @@ const base = [
         show("verify");
       };
 
+      $("#orgSwitcher").onchange = async (event) => {
+        const slug = event.target.value;
+        if (!slug) return;
+
+        event.target.disabled = true;
+        try {
+          const response = await fetch(AUTH_API + "/session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "same-origin",
+            body: JSON.stringify({ organizationSlug: slug }),
+          });
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok || !payload.authenticated) {
+            throw new Error(
+              payload.error || "تعذر تبديل المؤسسة.",
+            );
+          }
+
+          authState = {
+            checked: true,
+            authenticated: true,
+            demoMode: false,
+            user: payload.user || authState.user,
+            membership: payload.membership || null,
+            memberships: Array.isArray(payload.memberships)
+              ? payload.memberships
+              : [],
+          };
+          dashboardMetrics = null;
+          updateAuthUi();
+          await hydrateRemoteCerts();
+          await loadDashboardMetrics();
+        } catch (error) {
+          alert(error.message || "تعذر تبديل المؤسسة.");
+          updateAuthUi();
+        } finally {
+          event.target.disabled = false;
+        }
+      };
+
       $("#logoutBtn").onclick = async () => {
         await fetch(AUTH_API + "/logout", {
           method: "POST",
@@ -692,7 +961,9 @@ const base = [
           demoMode: false,
           user: null,
           membership: null,
+          memberships: [],
         };
+        dashboardMetrics = null;
         updateAuthUi();
         location.hash = "";
         show("verify");
@@ -1033,28 +1304,57 @@ const base = [
           storageMessage("جاري تحميل بيانات المؤسسة…"),
         );
 
+        const displayName = document.createElement("input");
+        displayName.placeholder = "اسم المؤسسة الظاهر";
+
+        const customDomain = document.createElement("input");
+        customDomain.placeholder = "verify.example.com";
+        customDomain.dir = "ltr";
+
+        const primaryColor = document.createElement("input");
+        primaryColor.type = "color";
+        primaryColor.value = "#0B7783";
+
+        const secondaryColor = document.createElement("input");
+        secondaryColor.type = "color";
+        secondaryColor.value = "#0B2B34";
+
         const file = document.createElement("input");
         file.type = "file";
         file.accept = "image/png,image/jpeg,image/webp";
 
         body.append(
           previewWrap,
-          modalField("رفع شعار جديد", file),
+          modalField("اسم المؤسسة الظاهر", displayName),
+          modalField("الدومين المخصص (اختياري)", customDomain),
+          modalField("اللون الأساسي", primaryColor),
+          modalField("اللون الثانوي", secondaryColor),
+          modalField("رفع / استبدال الشعار", file),
           storageMessage(
-            "الشعار يحفظ داخل Private Storage، والحد الحالي 1.5MB.",
+            "الدومين يُحفظ كإعداد للمؤسسة. ربط DNS/Vercel يتم عند تفعيل الدومين فعلياً.",
           ),
         );
 
         async function refreshBranding() {
           try {
             const assets = await loadStorageAssets();
+            const org = assets.organization || {};
+
+            displayName.value =
+              org.displayName || org.name || "";
+            customDomain.value = org.customDomain || "";
+            primaryColor.value =
+              org.primaryColor || "#0B7783";
+            secondaryColor.value =
+              org.secondaryColor || "#0B2B34";
+
             previewWrap.replaceChildren();
 
-            if (assets.organization?.logoUrl) {
+            if (org.logoUrl) {
               const img = document.createElement("img");
               img.src =
-                assets.organization.logoUrl +
-                (assets.organization.logoUrl.includes("?") ? "&" : "?") +
+                org.logoUrl +
+                (org.logoUrl.includes("?") ? "&" : "?") +
                 "t=" +
                 Date.now();
               img.alt = "Organization logo";
@@ -1062,16 +1362,24 @@ const base = [
               const text = document.createElement("div");
               const name = document.createElement("b");
               name.textContent =
-                assets.organization.name || "DevsHub Academy";
+                org.displayName || org.name || "Organization";
               const slug = document.createElement("small");
-              slug.textContent = assets.organization.slug || "";
+              slug.textContent =
+                (org.slug || "") +
+                (org.customDomain
+                  ? " · " + org.customDomain
+                  : "");
               text.append(name, slug);
-
               previewWrap.append(img, text);
             } else {
-              previewWrap.append(
-                storageMessage("لا يوجد شعار سحابي مرفوع حالياً."),
-              );
+              const text = document.createElement("div");
+              const name = document.createElement("b");
+              name.textContent =
+                org.displayName || org.name || "Organization";
+              const slug = document.createElement("small");
+              slug.textContent = org.slug || "";
+              text.append(name, slug);
+              previewWrap.append(text);
             }
           } catch (error) {
             previewWrap.replaceChildren(
@@ -1080,31 +1388,375 @@ const base = [
           }
         }
 
-        primary.textContent = "رفع الشعار";
+        primary.textContent = "حفظ الهوية";
         primary.disabled = false;
         primary.onclick = async () => {
-          if (!file.files[0]) {
-            alert("اختر صورة الشعار أولاً.");
-            return;
-          }
-
           primary.disabled = true;
-          primary.textContent = "جاري الرفع…";
+          primary.textContent = "جاري الحفظ…";
 
           try {
-            await uploadStorageAsset("logo", file.files[0]);
-            file.value = "";
+            const updated = await updateOrganizationBranding({
+              displayName: displayName.value.trim(),
+              customDomain: customDomain.value.trim(),
+              primaryColor: primaryColor.value,
+              secondaryColor: secondaryColor.value,
+            });
+
+            if (file.files[0]) {
+              await uploadStorageAsset("logo", file.files[0]);
+              file.value = "";
+            }
+
+            if (authState.membership?.organization) {
+              authState.membership.organization = {
+                ...authState.membership.organization,
+                ...updated,
+                display_name:
+                  updated.display_name ||
+                  displayName.value.trim(),
+              };
+            }
+
+            authState.memberships = authState.memberships.map(
+              (item) =>
+                item.organization?.id === updated.id
+                  ? {
+                      ...item,
+                      organization: {
+                        ...item.organization,
+                        ...updated,
+                      },
+                    }
+                  : item,
+            );
+
+            updateAuthUi();
             await refreshBranding();
           } catch (error) {
             alert(error.message);
           } finally {
             primary.disabled = false;
-            primary.textContent = "رفع الشعار";
+            primary.textContent = "حفظ الهوية";
           }
         };
 
         modal.classList.add("show");
         await refreshBranding();
+      }
+
+      function normalizeBulkRow(row) {
+        const entries = Object.entries(row || {});
+        const normalized = {};
+        entries.forEach(([key, value]) => {
+          normalized[
+            String(key)
+              .trim()
+              .toLowerCase()
+              .replace(/\s+/g, "_")
+          ] = value;
+        });
+
+        const valueOf = (...keys) => {
+          for (const key of keys) {
+            if (
+              normalized[key] !== undefined &&
+              normalized[key] !== null &&
+              String(normalized[key]).trim() !== ""
+            ) {
+              return String(normalized[key]).trim();
+            }
+          }
+          return "";
+        };
+
+        return {
+          name: valueOf(
+            "name",
+            "student",
+            "student_name",
+            "full_name",
+            "اسم_المتدرب",
+            "الاسم",
+          ),
+          course: valueOf(
+            "course",
+            "course_name",
+            "اسم_الدورة",
+            "الدورة",
+          ),
+          prefix: valueOf("prefix", "code_prefix") || "DVH",
+          date: valueOf(
+            "date",
+            "issued_at",
+            "issue_date",
+            "تاريخ_الإصدار",
+          ) || new Date().toISOString().slice(0, 10),
+          expiresAt:
+            valueOf(
+              "expiresat",
+              "expires_at",
+              "expiry_date",
+              "تاريخ_الانتهاء",
+            ) || null,
+          status: "valid",
+        };
+      }
+
+      async function parseBulkFile(file) {
+        if (!file) return [];
+        if (!window.XLSX) {
+          throw new Error("تعذر تحميل قارئ Excel/CSV.");
+        }
+
+        const bytes = await file.arrayBuffer();
+        const workbook = window.XLSX.read(bytes, {
+          type: "array",
+          cellDates: false,
+        });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = window.XLSX.utils.sheet_to_json(sheet, {
+          defval: "",
+          raw: false,
+        });
+
+        return rows
+          .map(normalizeBulkRow)
+          .filter((row) => row.name || row.course);
+      }
+
+      async function openBulkIssuanceManager() {
+        const modal = $("#adminToolModal");
+        const body = $("#adminToolBody");
+        const primary = $("#adminToolPrimary");
+
+        $("#adminToolTitle").textContent = "الإصدار الجماعي";
+        body.replaceChildren();
+
+        const file = document.createElement("input");
+        file.type = "file";
+        file.accept = ".csv,.xlsx,.xls";
+
+        const preview = document.createElement("div");
+        preview.className = "bulk-preview";
+        preview.append(
+          storageMessage(
+            "ارفع CSV أو Excel. الأعمدة المطلوبة: name و course. ويمكن إضافة prefix و date و expiresAt.",
+          ),
+        );
+
+        const sample = document.createElement("button");
+        sample.className = "soft bulk-sample";
+        sample.type = "button";
+        sample.textContent = "تنزيل نموذج CSV";
+        sample.onclick = () => {
+          const content =
+            "name,course,prefix,date,expiresAt\n" +
+            "Ahmed Ali,Web Development Essentials,DVH," +
+            new Date().toISOString().slice(0, 10) +
+            ",\n";
+          const blob = new Blob([content], {
+            type: "text/csv;charset=utf-8",
+          });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "devshub-bulk-template.csv";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+        };
+
+        let parsedRows = [];
+
+        file.onchange = async () => {
+          preview.replaceChildren(
+            storageMessage("جاري قراءة الملف…"),
+          );
+          try {
+            parsedRows = await parseBulkFile(file.files[0]);
+            if (!parsedRows.length) {
+              throw new Error("لم يتم العثور على صفوف صالحة.");
+            }
+            if (parsedRows.length > 200) {
+              throw new Error("الحد الأقصى 200 شهادة في الدفعة الواحدة.");
+            }
+
+            const invalid = parsedRows.findIndex(
+              (row) => !row.name || !row.course,
+            );
+            if (invalid >= 0) {
+              throw new Error(
+                "الصف " +
+                  (invalid + 2) +
+                  " ينقصه الاسم أو الدورة.",
+              );
+            }
+
+            const table = document.createElement("div");
+            table.className = "bulk-preview-list";
+            parsedRows.slice(0, 8).forEach((row, index) => {
+              const item = document.createElement("div");
+              const num = document.createElement("b");
+              num.textContent = String(index + 1).padStart(2, "0");
+              const text = document.createElement("span");
+              text.textContent = row.name + " — " + row.course;
+              item.append(num, text);
+              table.appendChild(item);
+            });
+
+            preview.replaceChildren(
+              storageMessage(
+                "جاهز للإصدار: " +
+                  parsedRows.length +
+                  " شهادة.",
+              ),
+              table,
+            );
+          } catch (error) {
+            parsedRows = [];
+            preview.replaceChildren(
+              storageMessage(error.message, "error"),
+            );
+          }
+        };
+
+        body.append(
+          modalField("ملف CSV / Excel", file),
+          sample,
+          preview,
+        );
+
+        primary.textContent = "إصدار الشهادات";
+        primary.disabled = false;
+        primary.onclick = async () => {
+          if (!parsedRows.length) {
+            alert("اختر ملفاً صالحاً أولاً.");
+            return;
+          }
+
+          primary.disabled = true;
+          primary.textContent = "جاري الإصدار…";
+
+          try {
+            const issued = await issueBulkCertificates(parsedRows);
+            if (storageProvider === "demo") {
+              certs = [...issued, ...certs];
+            } else {
+              await hydrateRemoteCerts();
+            }
+            save();
+            render();
+            await loadDashboardMetrics();
+            preview.prepend(
+              storageMessage(
+                "تم إصدار " +
+                  issued.length +
+                  " شهادة بنجاح.",
+              ),
+            );
+            parsedRows = [];
+            file.value = "";
+          } catch (error) {
+            alert(error.message || "تعذر الإصدار الجماعي.");
+          } finally {
+            primary.disabled = false;
+            primary.textContent = "إصدار الشهادات";
+          }
+        };
+
+        modal.classList.add("show");
+      }
+
+      function metricCard(label, value) {
+        const card = document.createElement("div");
+        card.className = "report-metric-card";
+        const small = document.createElement("span");
+        small.textContent = label;
+        const strong = document.createElement("b");
+        strong.textContent = String(value ?? 0);
+        card.append(small, strong);
+        return card;
+      }
+
+      async function openReportsManager() {
+        const modal = $("#adminToolModal");
+        const body = $("#adminToolBody");
+        const primary = $("#adminToolPrimary");
+
+        $("#adminToolTitle").textContent = "التقارير والتحليلات";
+        body.replaceChildren(
+          storageMessage("جاري تحميل بيانات التقارير…"),
+        );
+        primary.textContent = "تحديث التقرير";
+        primary.disabled = true;
+        modal.classList.add("show");
+
+        async function refresh() {
+          primary.disabled = true;
+          try {
+            const metrics = await loadDashboardMetrics();
+            const m = metrics || {};
+
+            const grid = document.createElement("div");
+            grid.className = "report-metric-grid";
+            grid.append(
+              metricCard("إجمالي الشهادات", m.certificatesTotal ?? certs.length),
+              metricCard("صالحة", m.validCertificates ?? 0),
+              metricCard("ملغاة", m.revokedCertificates ?? 0),
+              metricCard("منتهية", m.expiredCertificates ?? 0),
+              metricCard("صدرت هذا الشهر", m.issuedThisMonth ?? 0),
+              metricCard("تحققات اليوم", m.verificationsToday ?? 0),
+              metricCard("تحققات 30 يوم", m.verifications30d ?? 0),
+              metricCard("QR اليوم", m.qrToday ?? 0),
+              metricCard("Serial اليوم", m.serialToday ?? 0),
+              metricCard("Direct links", m.directToday ?? 0),
+            );
+
+            const chart = document.createElement("div");
+            chart.className = "report-bar-chart";
+            const daily = Array.isArray(m.daily30d)
+              ? m.daily30d
+              : [];
+            const max = Math.max(
+              1,
+              ...daily.map((item) => Number(item.count || 0)),
+            );
+            daily.forEach((item) => {
+              const bar = document.createElement("i");
+              bar.style.height =
+                Math.max(
+                  4,
+                  Math.round((Number(item.count || 0) / max) * 100),
+                ) + "%";
+              bar.title =
+                String(item.date || "") +
+                ": " +
+                String(item.count || 0);
+              chart.appendChild(bar);
+            });
+
+            const chartWrap = document.createElement("div");
+            chartWrap.className = "report-chart-wrap";
+            const title = document.createElement("b");
+            title.textContent = "نشاط التحقق — آخر 30 يوم";
+            chartWrap.append(title, chart);
+
+            body.replaceChildren(grid, chartWrap);
+          } catch (error) {
+            body.replaceChildren(
+              storageMessage(
+                "تعذر تحميل التقارير حالياً.",
+                "error",
+              ),
+            );
+          } finally {
+            primary.disabled = false;
+          }
+        }
+
+        primary.onclick = refresh;
+        await refresh();
       }
 
       function setAdminView(view) {
@@ -1116,6 +1768,16 @@ const base = [
           show("verify");
           return;
         }
+        if (view === "bulk") {
+          openBulkIssuanceManager();
+          return;
+        }
+
+        if (view === "reports") {
+          openReportsManager();
+          return;
+        }
+
         if (view === "templates") {
           openTemplateStorageManager();
           return;
@@ -1135,19 +1797,10 @@ const base = [
               : "ابحث في سجلات الشهادات واعرض صفحة كل متدرب.";
           $("#certificateTableTitle").textContent =
             view === "dashboard" ? "آخر الشهادات الصادرة" : "كل الشهادات";
+          loadDashboardMetrics();
           return;
         }
         const tools = {
-          bulk: [
-            "الإصدار الجماعي",
-            '<p>ارفع ملف CSV يحتوي اسم المتدرب واسم الدورة لإصدار عدة شهادات دفعة واحدة.</p><label class="soft upload" style="margin-top:14px">▧ اختيار ملف CSV<input type="file" accept=".csv" /></label>',
-            "متابعة",
-          ],
-          reports: [
-            "تقرير الأداء",
-            '<p>هذا الشهر: <b>' + certs.length + '</b> شهادة صادرة و <b>86</b> عملية تحقق ناجحة اليوم.</p><div class="tip">ستظهر التقارير التفصيلية هنا عند ربط بيانات المؤسسة.</div>',
-            "تحديث التقرير",
-          ],
         };
         const tool = tools[view];
         if (tool) openAdminTool(tool[0], tool[1], tool[2]);
@@ -1229,6 +1882,7 @@ const base = [
 
           save();
           render();
+          await loadDashboardMetrics();
 
           $("#addModal").classList.remove("show");
           $("#newName").value = "";
@@ -1412,6 +2066,32 @@ const base = [
         if (!active.pdf && url.startsWith("blob:")) {
           setTimeout(() => URL.revokeObjectURL(url), 60000);
         }
+      };
+
+      $("#downloadQrBtn").onclick = () => {
+        if (!active) return;
+
+        const canvas = $("#officialQr canvas");
+        const image = $("#officialQr img");
+        let href = "";
+
+        if (canvas) {
+          href = canvas.toDataURL("image/png");
+        } else if (image?.src) {
+          href = image.src;
+        }
+
+        if (!href) {
+          alert("تعذر تجهيز QR حالياً.");
+          return;
+        }
+
+        const a = document.createElement("a");
+        a.href = href;
+        a.download = active.serial + "-QR.png";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
       };
 
       $("#downloadBtn").onclick = () => {
