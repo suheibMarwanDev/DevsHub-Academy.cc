@@ -309,6 +309,24 @@ const base = [
         return payload;
       }
 
+      async function updateOrganizationBranding(settings) {
+        const response = await fetch(STORAGE_API + "/assets", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({ organization: settings }),
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || !payload.organization) {
+          throw new Error(
+            payload.error || "تعذر حفظ هوية المؤسسة.",
+          );
+        }
+
+        return payload.organization;
+      }
+
       async function setActiveTemplate(templateId) {
         const response = await fetch(STORAGE_API + "/assets", {
           method: "PATCH",
@@ -709,6 +727,27 @@ const base = [
           resultIssuer.textContent =
             c.issuer?.name || "DevsHub Academy.cc";
         }
+
+        const issuerLogo = $("#certIssuerLogo");
+        if (issuerLogo) {
+          if (c.issuer?.logoUrl) {
+            issuerLogo.src = c.issuer.logoUrl;
+            issuerLogo.hidden = false;
+          } else {
+            issuerLogo.hidden = true;
+            issuerLogo.removeAttribute("src");
+          }
+        }
+
+        document.documentElement.style.setProperty(
+          "--issuer-primary",
+          c.issuer?.primaryColor || "#0B7783",
+        );
+        document.documentElement.style.setProperty(
+          "--issuer-secondary",
+          c.issuer?.secondaryColor || "#0B2B34",
+        );
+
         applyPublicStatus(c);
         loadPdfPreview(c);
         renderOfficialQr(c);
@@ -1258,28 +1297,57 @@ const base = [
           storageMessage("جاري تحميل بيانات المؤسسة…"),
         );
 
+        const displayName = document.createElement("input");
+        displayName.placeholder = "اسم المؤسسة الظاهر";
+
+        const customDomain = document.createElement("input");
+        customDomain.placeholder = "verify.example.com";
+        customDomain.dir = "ltr";
+
+        const primaryColor = document.createElement("input");
+        primaryColor.type = "color";
+        primaryColor.value = "#0B7783";
+
+        const secondaryColor = document.createElement("input");
+        secondaryColor.type = "color";
+        secondaryColor.value = "#0B2B34";
+
         const file = document.createElement("input");
         file.type = "file";
         file.accept = "image/png,image/jpeg,image/webp";
 
         body.append(
           previewWrap,
-          modalField("رفع شعار جديد", file),
+          modalField("اسم المؤسسة الظاهر", displayName),
+          modalField("الدومين المخصص (اختياري)", customDomain),
+          modalField("اللون الأساسي", primaryColor),
+          modalField("اللون الثانوي", secondaryColor),
+          modalField("رفع / استبدال الشعار", file),
           storageMessage(
-            "الشعار يحفظ داخل Private Storage، والحد الحالي 1.5MB.",
+            "الدومين يُحفظ كإعداد للمؤسسة. ربط DNS/Vercel يتم عند تفعيل الدومين فعلياً.",
           ),
         );
 
         async function refreshBranding() {
           try {
             const assets = await loadStorageAssets();
+            const org = assets.organization || {};
+
+            displayName.value =
+              org.displayName || org.name || "";
+            customDomain.value = org.customDomain || "";
+            primaryColor.value =
+              org.primaryColor || "#0B7783";
+            secondaryColor.value =
+              org.secondaryColor || "#0B2B34";
+
             previewWrap.replaceChildren();
 
-            if (assets.organization?.logoUrl) {
+            if (org.logoUrl) {
               const img = document.createElement("img");
               img.src =
-                assets.organization.logoUrl +
-                (assets.organization.logoUrl.includes("?") ? "&" : "?") +
+                org.logoUrl +
+                (org.logoUrl.includes("?") ? "&" : "?") +
                 "t=" +
                 Date.now();
               img.alt = "Organization logo";
@@ -1287,16 +1355,24 @@ const base = [
               const text = document.createElement("div");
               const name = document.createElement("b");
               name.textContent =
-                assets.organization.name || "DevsHub Academy";
+                org.displayName || org.name || "Organization";
               const slug = document.createElement("small");
-              slug.textContent = assets.organization.slug || "";
+              slug.textContent =
+                (org.slug || "") +
+                (org.customDomain
+                  ? " · " + org.customDomain
+                  : "");
               text.append(name, slug);
-
               previewWrap.append(img, text);
             } else {
-              previewWrap.append(
-                storageMessage("لا يوجد شعار سحابي مرفوع حالياً."),
-              );
+              const text = document.createElement("div");
+              const name = document.createElement("b");
+              name.textContent =
+                org.displayName || org.name || "Organization";
+              const slug = document.createElement("small");
+              slug.textContent = org.slug || "";
+              text.append(name, slug);
+              previewWrap.append(text);
             }
           } catch (error) {
             previewWrap.replaceChildren(
@@ -1305,26 +1381,55 @@ const base = [
           }
         }
 
-        primary.textContent = "رفع الشعار";
+        primary.textContent = "حفظ الهوية";
         primary.disabled = false;
         primary.onclick = async () => {
-          if (!file.files[0]) {
-            alert("اختر صورة الشعار أولاً.");
-            return;
-          }
-
           primary.disabled = true;
-          primary.textContent = "جاري الرفع…";
+          primary.textContent = "جاري الحفظ…";
 
           try {
-            await uploadStorageAsset("logo", file.files[0]);
-            file.value = "";
+            const updated = await updateOrganizationBranding({
+              displayName: displayName.value.trim(),
+              customDomain: customDomain.value.trim(),
+              primaryColor: primaryColor.value,
+              secondaryColor: secondaryColor.value,
+            });
+
+            if (file.files[0]) {
+              await uploadStorageAsset("logo", file.files[0]);
+              file.value = "";
+            }
+
+            if (authState.membership?.organization) {
+              authState.membership.organization = {
+                ...authState.membership.organization,
+                ...updated,
+                display_name:
+                  updated.display_name ||
+                  displayName.value.trim(),
+              };
+            }
+
+            authState.memberships = authState.memberships.map(
+              (item) =>
+                item.organization?.id === updated.id
+                  ? {
+                      ...item,
+                      organization: {
+                        ...item.organization,
+                        ...updated,
+                      },
+                    }
+                  : item,
+            );
+
+            updateAuthUi();
             await refreshBranding();
           } catch (error) {
             alert(error.message);
           } finally {
             primary.disabled = false;
-            primary.textContent = "رفع الشعار";
+            primary.textContent = "حفظ الهوية";
           }
         };
 
