@@ -9,8 +9,26 @@ const base = [
           status: "valid",
         },
       ];
-      let certs =
-          JSON.parse(localStorage.getItem("trustpass-certs") || "null") || base,
+      let storedCerts = [];
+      try {
+        const parsed = JSON.parse(
+          localStorage.getItem("trustpass-certs") || "[]",
+        );
+        storedCerts = Array.isArray(parsed) ? parsed : [];
+      } catch (error) {
+        storedCerts = [];
+      }
+
+      const startupCertificateMap = new Map();
+      [...base, ...storedCerts].forEach((certificate) => {
+        if (!certificate?.serial) return;
+        startupCertificateMap.set(
+          String(certificate.serial).trim().toUpperCase(),
+          certificate,
+        );
+      });
+
+      let certs = Array.from(startupCertificateMap.values()),
         active;
       const $ = (s) => document.querySelector(s);
       document.body.dataset.view = "home";
@@ -40,7 +58,30 @@ const base = [
       }
 
       function save() {
-        localStorage.setItem("trustpass-certs", JSON.stringify(certs));
+        try {
+          localStorage.setItem("trustpass-certs", JSON.stringify(certs));
+          return true;
+        } catch (error) {
+          try {
+            const compact = certs.map((certificate) => {
+              if (
+                typeof certificate?.pdf === "string" &&
+                certificate.pdf.startsWith("data:")
+              ) {
+                const { pdf, ...metadata } = certificate;
+                return metadata;
+              }
+              return certificate;
+            });
+            localStorage.setItem(
+              "trustpass-certs",
+              JSON.stringify(compact),
+            );
+            return true;
+          } catch (fallbackError) {
+            return false;
+          }
+        }
       }
 
       const CERT_API = "/api/certificates";
@@ -393,7 +434,9 @@ const base = [
           if (storageProvider === "demo") {
             const map = new Map();
             [...remoteCerts, ...certs].forEach((cert) => {
-              if (cert?.serial) map.set(cert.serial.toUpperCase(), cert);
+              if (cert?.serial) {
+                map.set(normalizeSerialValue(cert.serial), cert);
+              }
             });
             certs = Array.from(map.values());
           } else {
@@ -564,8 +607,24 @@ const base = [
         updateDashboardStats();
       }
 
+      function normalizeSerialValue(value) {
+        const cleaned = String(value || "")
+          .replace(/[\u200E\u200F\u202A-\u202E\u2066-\u2069]/g, "")
+          .replace(/[\u00A0\u2000-\u200D\u202F\u205F\u3000]/g, "")
+          .replace(/[\u2010-\u2015\u2212]/g, "-")
+          .trim()
+          .toUpperCase();
+
+        const direct = cleaned.match(/[A-Z0-9]{2,10}-\d{4}-[A-Z0-9]{4,20}/);
+        return direct ? direct[0] : cleaned;
+      }
+
       function find(s) {
-        return certs.find((c) => c.serial === s.trim().toUpperCase());
+        const serial = normalizeSerialValue(s);
+        return certs.find(
+          (certificate) =>
+            normalizeSerialValue(certificate.serial) === serial,
+        );
       }
       function show(v) {
         document
@@ -817,7 +876,7 @@ const base = [
       }
 
       async function verifySerial(value, source = "serial") {
-        const serial = String(value || "").trim().toUpperCase();
+        const serial = normalizeSerialValue(value);
         if (!serial) {
           $("#badSerial").textContent = "اكتب الرقم التسلسلي أولاً";
           $("#resultModal").classList.add("show");
@@ -842,7 +901,9 @@ const base = [
 
           if (certificate) {
             const existing = certs.findIndex(
-              (item) => item.serial?.toUpperCase() === certificate.serial?.toUpperCase(),
+              (item) =>
+                normalizeSerialValue(item.serial) ===
+                normalizeSerialValue(certificate.serial),
             );
             if (existing >= 0) certs[existing] = { ...certs[existing], ...certificate };
             else certs.unshift(certificate);
@@ -1856,7 +1917,7 @@ const base = [
         const phone = $("#newPhone").value.trim();
         const course = $("#newCourse").value.trim();
         const date = $("#newDate").value;
-        const serial = $("#newSerial").value.trim().toUpperCase();
+        const serial = normalizeSerialValue($("#newSerial").value);
         const button = $("#saveCert");
         const pdfFile = $("#newPdf").files[0];
 
@@ -1884,7 +1945,7 @@ const base = [
         }
 
         const duplicateLocal = certs.some(
-          (item) => item.serial?.toUpperCase() === serial,
+          (item) => normalizeSerialValue(item.serial) === serial,
         );
         if (duplicateLocal) {
           alert("هذا Serial Number مستخدم مسبقاً. اختر رقماً آخر.");
@@ -1971,13 +2032,13 @@ const base = [
       function extractSerialFromQr(raw) {
         const text = String(raw || "").trim();
         const direct = text.match(/[A-Z0-9]{2,10}-\d{4}-\d{4,12}/i);
-        if (direct) return direct[0].toUpperCase();
+        if (direct) return normalizeSerialValue(direct[0]);
         const route = text.match(/certificate\/([^?#/]+)/i);
-        if (route) return decodeURIComponent(route[1]).trim().toUpperCase();
+        if (route) return normalizeSerialValue(decodeURIComponent(route[1]));
         try {
           const url = new URL(text);
           const fromQuery = url.searchParams.get("serial") || url.searchParams.get("certificate");
-          if (fromQuery) return fromQuery.trim().toUpperCase();
+          if (fromQuery) return normalizeSerialValue(fromQuery);
         } catch (e) {}
         return "";
       }
