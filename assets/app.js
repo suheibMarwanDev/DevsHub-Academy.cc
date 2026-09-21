@@ -2061,6 +2061,32 @@ const base = [
         }
       };
 
+      $("#downloadQrBtn").onclick = () => {
+        if (!active) return;
+
+        const canvas = $("#officialQr canvas");
+        const image = $("#officialQr img");
+        let href = "";
+
+        if (canvas) {
+          href = canvas.toDataURL("image/png");
+        } else if (image?.src) {
+          href = image.src;
+        }
+
+        if (!href) {
+          alert("تعذر تجهيز QR حالياً.");
+          return;
+        }
+
+        const a = document.createElement("a");
+        a.href = href;
+        a.download = active.serial + "-QR.png";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      };
+
       $("#downloadBtn").onclick = () => {
         if (!active) return;
         if (active.pdf) {
