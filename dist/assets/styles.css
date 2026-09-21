@@ -6035,3 +6035,73 @@ body {
 .issue-dialog-head h2 {
   color: var(--dh-black) !important;
 }
+
+
+/* DEVSHUB REFERENCE PALETTE v4 */
+:root {
+  --dh-black: #070707;
+  --dh-ink: #111114;
+  --dh-purple: #6062db;
+  --dh-purple-bright: #7b7eea;
+  --dh-purple-soft: #f0f0ff;
+  --dh-green: #59b36d;
+  --dh-gray: #9a9ba5;
+  --dh-border: #e8e8ee;
+  --dh-page: #fbfbfd;
+}
+
+.brand-copy .home-eyebrow {
+  color: #777985 !important;
+  font-family: Cairo, sans-serif !important;
+  font-size: 10px !important;
+  letter-spacing: .2px !important;
+}
+
+.brand-copy .home-eyebrow::before {
+  background: var(--dh-green) !important;
+}
+
+.brand-copy h1 {
+  color: var(--dh-black) !important;
+}
+
+.brand-copy h1 em {
+  background: linear-gradient(90deg, #6062db 0%, #7779ea 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+.brand-copy > p {
+  color: #7c7e89 !important;
+}
+
+.brand-copy .home-primary,
+#verify .verify-icon-simple,
+#verify .verify-submit-simple {
+  background: linear-gradient(135deg, #6062db, #5557d2) !important;
+}
+
+.home-proof-row i,
+.brand-floating-chip > i {
+  background: #f0f0ff !important;
+  color: #6062db !important;
+}
+
+.brand-record-card .home-record-valid {
+  color: #6062db !important;
+  border-color: #dbdcfa !important;
+  background: #f3f3ff !important;
+}
+
+.brand-record-card .home-record-body > small,
+.brand-flow > div > span,
+#verify .verify-overline,
+#verify .verify-qr-simple > span {
+  color: #6062db !important;
+}
+
+.brand-scan-line {
+  background: linear-gradient(90deg, transparent, #6062db, #8a8cf2, transparent) !important;
+  box-shadow: 0 0 16px rgba(96,98,219,.34) !important;
+}
