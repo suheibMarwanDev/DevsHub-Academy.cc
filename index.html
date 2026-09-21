@@ -62,49 +62,73 @@
       </header>
       <main>
         <section class="view active" id="verify">
-          <div class="credential-home vivid-inspired">
-            <section class="verification-hero">
-              <div class="verification-intro">
-                <div class="issuer-pill">
-                  <span class="issuer-mark">◆</span>
+          <div class="verify-experience">
+            <div class="verify-ambient" aria-hidden="true">
+              <span></span><span></span><span></span>
+            </div>
+
+            <section class="verify-hero-modern">
+              <div class="verify-intro-modern">
+                <div class="official-mark">
+                  <span class="official-mark-icon" aria-hidden="true">✓</span>
                   <div>
-                    <small>DEVSHUB PUBLIC VERIFICATION</small>
-                    <b>Official Credential Record</b>
+                    <small>DEVSHUB ACADEMY</small>
+                    <b>Official Credential Verification</b>
                   </div>
                 </div>
 
-                <span class="credential-eyebrow">PUBLIC CREDENTIAL VERIFICATION</span>
-                <h1>اعرف هوية الشهادة.<br /><em>طابق السجل الرسمي.</em></h1>
-                <p class="credential-lead">
-                  استخدم الرقم التسلسلي المطبوع على الشهادة أو امسح رمز QR للوصول إلى سجل التحقق العام الخاص بها.
+                <span class="verify-kicker">PUBLIC CERTIFICATE VERIFICATION</span>
+                <h1>تحقق من الاعتماد<br /><em>بثقة ووضوح.</em></h1>
+                <p class="verify-lead">
+                  طابق الشهادة مع سجلها الرسمي باستخدام Certificate ID أو رمز QR.
+                  تظهر لك حالة الاعتماد ومعلوماته العامة مباشرة من سجل المنصة.
                 </p>
 
-                <div class="identity-sequence" aria-label="مسار التحقق">
-                  <div><b>01</b><span><strong>Certificate</strong><small>الشهادة المطبوعة</small></span></div>
-                  <i>→</i>
-                  <div><b>02</b><span><strong>Serial / QR</strong><small>هوية رقمية فريدة</small></span></div>
-                  <i>→</i>
-                  <div><b>03</b><span><strong>Official Record</strong><small>السجل العام</small></span></div>
+                <div class="verify-trust-row" aria-label="مزايا التحقق">
+                  <div>
+                    <span aria-hidden="true">◈</span>
+                    <p><b>Issuer-issued record</b><small>سجل صادر من الجهة المانحة</small></p>
+                  </div>
+                  <div>
+                    <span aria-hidden="true">◌</span>
+                    <p><b>Current status</b><small>حالة الاعتماد الحالية</small></p>
+                  </div>
+                  <div>
+                    <span aria-hidden="true">⌁</span>
+                    <p><b>Privacy-aware</b><small>يعرض البيانات اللازمة فقط</small></p>
+                  </div>
                 </div>
               </div>
 
-              <div class="verification-console">
-                <div class="console-kicker">
-                  <span><i></i> OFFICIAL LOOKUP</span>
-                  <small>Public verification</small>
+              <aside class="verify-panel-modern" aria-labelledby="verifyPanelTitle">
+                <div class="verify-panel-head">
+                  <div>
+                    <span class="panel-shield" aria-hidden="true">✓</span>
+                    <div>
+                      <small>OFFICIAL LOOKUP</small>
+                      <b id="verifyPanelTitle">تحقق من شهادة</b>
+                    </div>
+                  </div>
+                  <span class="system-online"><i></i> System online</span>
                 </div>
 
-                <div class="verify-search-card reference-search">
-                  <div class="search-card-head">
-                    <div>
-                      <span>تحقق من الشهادة</span>
-                      <small>أدخل السيريال كما يظهر تماماً على الشهادة</small>
-                    </div>
-                    <i>01</i>
-                  </div>
+                <p class="verify-panel-copy">
+                  أدخل الرقم التسلسلي كما يظهر على الشهادة. لا تحتاج إلى تسجيل دخول.
+                </p>
 
-                  <label for="serial">Certificate serial</label>
-                  <div class="entry credential-entry">
+                <div class="verify-field-group">
+                  <label for="serial">
+                    Certificate ID
+                    <span>الرقم التسلسلي للشهادة</span>
+                  </label>
+
+                  <div class="serial-control">
+                    <span class="serial-control-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" focusable="false">
+                        <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v11a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 17.5v-11Z"></path>
+                        <path d="M8 9h8M8 12h5M8 15h7"></path>
+                      </svg>
+                    </span>
                     <textarea
                       id="serial"
                       rows="1"
@@ -113,101 +137,99 @@
                       autocorrect="off"
                       spellcheck="false"
                       inputmode="text"
+                      aria-describedby="serialHelp serialFeedback"
                       aria-label="الرقم التسلسلي للشهادة"
                     ></textarea>
-                    <button class="primary verify-main-btn" id="verifyBtn">
-                      تحقق من السجل
-                      <span>↗</span>
-                    </button>
+                    <span class="serial-format">ID</span>
                   </div>
 
-                  <div class="credential-secondary-actions">
-                    <button class="soft" id="cameraBtn">⌾ مسح QR بالكاميرا</button>
-                    <label class="soft upload">▧ رفع صورة QR<input id="imageInput" type="file" accept="image/*" capture="environment" /></label>
+                  <div class="serial-help-row">
+                    <span id="serialHelp">مثال: DVH-2026-78421</span>
+                    <button type="button" id="demoSerialBtn">استخدم المثال</button>
                   </div>
 
-                  <div class="lookup-guidance">
-                    <div>
-                      <b>أين أجد الرقم؟</b>
-                      <span>ابحث عن Certificate ID أو Serial أسفل الشهادة أو بجانب رمز QR.</span>
-                    </div>
-                    <button type="button" class="demo-serial" id="demoSerialBtn">جرّب سجل تجريبي</button>
-                  </div>
+                  <div class="serial-feedback" id="serialFeedback" role="status" aria-live="polite" hidden></div>
                 </div>
 
-                <div class="public-record-note">
-                  <span>🔒</span>
+                <button class="verify-primary-modern" id="verifyBtn" type="button">
+                  <span class="verify-btn-label">تحقق من الشهادة</span>
+                  <span class="verify-btn-icon" aria-hidden="true">→</span>
+                </button>
+
+                <div class="verify-progress-modern" id="verifyProgress" aria-live="polite" hidden>
+                  <span class="verify-spinner" aria-hidden="true"></span>
                   <div>
-                    <b>Public record only</b>
-                    <p>صفحة التحقق تعرض فقط المعلومات المناسبة للتأكد من الاعتماد، ولا تعرض بيانات الإدارة أو المعلومات التشغيلية الخاصة.</p>
+                    <b>جاري مطابقة السجل الرسمي</b>
+                    <small>يتم التحقق من Certificate ID وحالة الاعتماد…</small>
                   </div>
+                  <span class="verify-progress-dots" aria-hidden="true"><i></i><i></i><i></i></span>
                 </div>
-              </div>
+
+                <div class="verify-divider"><span>أو استخدم QR</span></div>
+
+                <div class="verify-alt-actions">
+                  <button class="verify-alt-btn" id="cameraBtn" type="button">
+                    <span aria-hidden="true">⌾</span>
+                    <div><b>مسح بالكاميرا</b><small>وجّه الكاميرا إلى QR</small></div>
+                  </button>
+                  <label class="verify-alt-btn verify-upload">
+                    <span aria-hidden="true">⇧</span>
+                    <div><b>رفع صورة QR</b><small>PNG أو JPG من جهازك</small></div>
+                    <input id="imageInput" type="file" accept="image/*" capture="environment" />
+                  </label>
+                </div>
+
+                <div class="verify-security-note">
+                  <span aria-hidden="true">🔒</span>
+                  <p>
+                    <b>Public verification</b>
+                    <small>تعرض هذه الخدمة معلومات الاعتماد العامة فقط ولا تكشف بيانات الإدارة.</small>
+                  </p>
+                </div>
+              </aside>
             </section>
 
-            <section class="credential-visual-section">
-              <div class="credential-visual" aria-hidden="true">
-                <div class="live-label"><i></i> LIVE RECORD MATCH</div>
-                <div class="credential-preview">
-                  <div class="credential-preview-head">
-                    <div class="preview-brand">DevsHub <b>Academy</b><small>.cc</small></div>
-                    <span class="preview-status">VERIFIED</span>
-                  </div>
-                  <div class="preview-certificate">
-                    <small>CERTIFICATE OF COMPLETION</small>
-                    <h3>Professional Credential</h3>
-                    <p>Issued to</p>
-                    <strong>Ahmed Ali</strong>
-                    <div class="preview-course">Web Development Essentials</div>
-                    <div class="preview-meta">
-                      <span>DVH-2026-78421</span>
-                      <span>12 Sep 2026</span>
-                    </div>
-                  </div>
-                  <div class="scan-beam premium-beam"></div>
-                </div>
-                <div class="verification-log">
-                  <div><i class="log-ok">✓</i><span><b>Visible serial</b><small>Captured</small></span></div>
-                  <div><i class="log-ok">✓</i><span><b>Issuer record</b><small>Matched</small></span></div>
-                  <div><i class="log-live"></i><span><b>Public status</b><small>Valid</small></span></div>
-                </div>
+            <section class="verification-confidence">
+              <div class="confidence-head">
+                <span>HOW VERIFICATION WORKS</span>
+                <h2>ثلاث خطوات للوصول إلى السجل الرسمي</h2>
+                <p>تجربة واضحة ومباشرة مصممة للتحقق السريع من الشهادات المهنية والتعليمية.</p>
               </div>
-            </section>
 
-            <section class="verification-principles">
-              <div class="section-heading">
-                <span>VERIFY WITH CONTEXT</span>
-                <h2>مو مجرد QR. التحقق يعني مطابقة الهوية بالسجل.</h2>
-                <p>رمز QR والرقم التسلسلي هما طريقان للوصول إلى نفس سجل الشهادة. النتيجة الرسمية هي المرجع النهائي داخل المنصة.</p>
-              </div>
-              <div class="principle-grid">
+              <div class="confidence-grid">
                 <article>
-                  <b>01</b>
-                  <h3>طابق الرقم المرئي</h3>
-                  <p>تأكد أن السيريال الظاهر على الشهادة يطابق السيريال المعروض في سجل التحقق.</p>
+                  <span>01</span>
+                  <div class="confidence-icon" aria-hidden="true">⌨</div>
+                  <h3>أدخل Certificate ID</h3>
+                  <p>استخدم الرقم الظاهر على الشهادة أو امسح رمز QR.</p>
                 </article>
                 <article>
-                  <b>02</b>
-                  <h3>اقرأ حالة الاعتماد</h3>
-                  <p>السجل يوضح إذا كانت الشهادة صالحة أو منتهية أو تم إلغاؤها.</p>
+                  <span>02</span>
+                  <div class="confidence-icon" aria-hidden="true">◌</div>
+                  <h3>نطابق السجل</h3>
+                  <p>يتم جلب معلومات الاعتماد وحالته الحالية من السجل الرسمي.</p>
                 </article>
                 <article>
-                  <b>03</b>
-                  <h3>اعتمد المعلومات العامة فقط</h3>
-                  <p>التحقق العام لا يكشف معلومات الإدارة أو بيانات تشغيلية غير ضرورية.</p>
+                  <span>03</span>
+                  <div class="confidence-icon" aria-hidden="true">✓</div>
+                  <h3>شاهد النتيجة</h3>
+                  <p>راجع حامل الشهادة، البرنامج، الجهة المصدرة والحالة بوضوح.</p>
                 </article>
               </div>
             </section>
 
-            <section class="verification-assurance">
-              <span class="credential-eyebrow">IDENTITY · TRACEABILITY · PUBLIC RECORD</span>
-              <h2>كل شهادة لها هوية رقمية يمكن الرجوع لها.</h2>
-              <p>DevsHub Academy تربط الشهادة المطبوعة بسجل رقمي عام يساعد أصحاب العمل والجهات المستلمة على التأكد من حالة الاعتماد ومصدره.</p>
+            <section class="verification-assurance-modern">
               <div>
-                <span>✓ Serial identity</span>
-                <span>✓ QR verification route</span>
-                <span>✓ Public status record</span>
-                <span>✓ Cross-device verification</span>
+                <span class="assurance-icon" aria-hidden="true">◇</span>
+                <p><b>Official record</b><small>كل نتيجة مرتبطة بسجل اعتماد فعلي داخل المنصة.</small></p>
+              </div>
+              <div>
+                <span class="assurance-icon" aria-hidden="true">✓</span>
+                <p><b>Status-aware</b><small>صالحة، منتهية أو ملغاة تظهر بشكل واضح.</small></p>
+              </div>
+              <div>
+                <span class="assurance-icon" aria-hidden="true">⌁</span>
+                <p><b>Shareable verification</b><small>QR والرابط المباشر يقودان إلى نفس السجل.</small></p>
               </div>
             </section>
           </div>
@@ -267,48 +289,125 @@
           </div>
         </section>
         <section class="view" id="certificate">
-          <div class="credential-result-page public-record-page">
-            <div class="result-topbar">
-              <button class="back" id="backBtn">← تحقق من شهادة أخرى</button>
-              <div class="result-issuer"><span>◆</span><img id="certIssuerLogo" alt="" hidden /><b>DevsHub Academy.cc</b><small>Public Verification</small></div>
+          <div class="verification-result-modern">
+            <div class="result-nav-modern">
+              <button class="result-back-modern" id="backBtn" type="button">
+                <span aria-hidden="true">←</span>
+                تحقق من شهادة أخرى
+              </button>
+
+              <div class="result-issuer">
+                <span class="result-issuer-mark" aria-hidden="true">◇</span>
+                <img id="certIssuerLogo" alt="" hidden />
+                <b>DevsHub Academy.cc</b>
+                <small>Official Public Verification</small>
+              </div>
             </div>
 
-            <div class="public-status-banner" id="statusBanner">
-              <div class="status-seal" id="statusIcon">✓</div>
+            <section class="public-status-banner result-status-modern" id="statusBanner">
+              <div class="status-seal success-seal" id="statusIcon" aria-hidden="true">✓</div>
               <div class="status-copy">
-                <small>PUBLIC VERIFICATION STATUS</small>
-                <h1 id="statusTitle">سجل الشهادة مطابق وصالح</h1>
-                <p id="statusDescription">تم العثور على هذا الاعتماد في سجل DevsHub Academy العام.</p>
+                <small>VERIFICATION STATUS</small>
+                <h1 id="statusTitle">Verified Certificate</h1>
+                <p id="statusDescription">تم العثور على هذا الاعتماد ومطابقته مع السجل الرسمي.</p>
               </div>
               <b class="status-pill status-valid" id="statusPill">VALID</b>
-            </div>
+            </section>
 
-            <div class="record-context-bar">
-              <div>
-                <span>Certificate identity</span>
-                <b id="recordIdentity">DVH-2026-78421</b>
-              </div>
-              <i>→</i>
-              <div>
-                <span>Issuer</span>
-                <b>DevsHub Academy.cc</b>
-              </div>
-              <i>→</i>
-              <div>
-                <span>Record</span>
-                <b id="recordMatchLabel">Matched</b>
-              </div>
-            </div>
-
-            <div class="credential-result-grid vivid-result-grid">
-              <div class="pdf-panel premium-pdf-panel">
-                <div class="pdf-toolbar">
+            <div class="result-main-modern">
+              <article class="credential-record-modern public-record-card">
+                <div class="record-modern-head">
                   <div>
-                    <span>نسخة الاعتماد</span>
-                    <small>DIGITAL CERTIFICATE</small>
+                    <span class="record-label-modern"><i></i> OFFICIAL CREDENTIAL RECORD</span>
+                    <span class="record-type">Professional Certificate</span>
                   </div>
-                  <b>PUBLIC PREVIEW</b>
+                  <span class="record-match-modern">
+                    <i aria-hidden="true">✓</i>
+                    <b id="recordMatchLabel">Matched</b>
+                  </span>
                 </div>
+
+                <div class="credential-holder-modern">
+                  <small>CERTIFICATE HOLDER</small>
+                  <h2 id="certName">Ahmed Ali</h2>
+                  <p id="certCourse">Web Development Essentials</p>
+                </div>
+
+                <div class="record-data-grid">
+                  <div>
+                    <span>Certificate ID</span>
+                    <b id="certSerial"></b>
+                  </div>
+                  <div>
+                    <span>Issuing organization</span>
+                    <b id="certIssuer">DevsHub Academy.cc</b>
+                  </div>
+                  <div>
+                    <span>Issue date</span>
+                    <b id="certDate"></b>
+                  </div>
+                  <div id="certExpiryRow" hidden>
+                    <span>Expiration date</span>
+                    <b id="certExpiry"></b>
+                  </div>
+                  <div>
+                    <span>Record status</span>
+                    <b class="record-valid" id="recordStatus">✓ صالح</b>
+                  </div>
+                  <div>
+                    <span>Record identity</span>
+                    <b id="recordIdentity">DVH-2026-78421</b>
+                  </div>
+                </div>
+
+                <div class="official-record-note">
+                  <span aria-hidden="true">i</span>
+                  <p>
+                    <b>Official public record</b>
+                    <small>هذه الصفحة تؤكد البيانات العامة المرتبطة بالاعتماد. احتفظ برقم الشهادة أو رابط التحقق للرجوع إليه لاحقاً.</small>
+                  </p>
+                </div>
+              </article>
+
+              <aside class="proof-panel-modern">
+                <div class="proof-panel-head">
+                  <span>VERIFICATION PROOF</span>
+                  <b>QR & trusted link</b>
+                </div>
+
+                <div class="official-qr-card proof-qr-modern">
+                  <div id="officialQr" aria-label="Official certificate QR"></div>
+                  <div>
+                    <b>Official verification QR</b>
+                    <span>امسح الرمز للوصول مباشرة إلى هذا السجل الرسمي.</span>
+                    <code id="officialQrUrl"></code>
+                  </div>
+                </div>
+
+                <div class="proof-points">
+                  <div><span aria-hidden="true">✓</span><p><b>Record located</b><small>تم العثور على السجل الرسمي.</small></p></div>
+                  <div><span aria-hidden="true">✓</span><p><b>Issuer identified</b><small>الجهة المصدرة ظاهرة بوضوح.</small></p></div>
+                  <div><span aria-hidden="true">✓</span><p><b>Status checked</b><small>تم عرض الحالة الحالية للاعتماد.</small></p></div>
+                </div>
+
+                <div class="record-actions result-actions-modern">
+                  <button class="primary download" id="downloadBtn">⇩ تنزيل الشهادة PDF</button>
+                  <button class="soft" id="downloadQrBtn">▣ تنزيل QR الرسمي</button>
+                  <button class="soft pdf-open" id="openPdfBtn">↗ فتح PDF في نافذة جديدة</button>
+                </div>
+              </aside>
+            </div>
+
+            <section class="document-preview-modern">
+              <div class="document-preview-head">
+                <div>
+                  <span>DIGITAL CERTIFICATE</span>
+                  <h3>نسخة الاعتماد</h3>
+                </div>
+                <small>PUBLIC PREVIEW</small>
+              </div>
+
+              <div class="document-preview-body">
                 <iframe id="pdfPreview" title="معاينة الشهادة PDF"></iframe>
                 <div class="generated-pdf-preview" id="generatedPdfPreview">
                   <div class="generated-paper">
@@ -322,57 +421,20 @@
                   </div>
                 </div>
               </div>
+            </section>
 
-              <aside class="verification-details premium-details public-record-card">
-                <div class="record-label"><i></i> OFFICIAL PUBLIC RECORD</div>
-                <span class="record-type">Professional Certificate</span>
-                <h2 id="certName">Ahmed Ali</h2>
-                <p class="course" id="certCourse">Web Development Essentials</p>
-
-                <div class="credential-record-list">
-                  <div><span>الجهة المصدرة</span><b id="certIssuer">DevsHub Academy.cc</b></div>
-                  <div><span>Certificate ID</span><b id="certSerial"></b></div>
-                  <div><span>تاريخ الإصدار</span><b id="certDate"></b></div>
-                  <div><span>حالة السجل</span><b class="record-valid" id="recordStatus">✓ صالح</b></div>
-                </div>
-
-                <div class="official-qr-card">
-                  <div id="officialQr" aria-label="Official certificate QR"></div>
-                  <div>
-                    <b>Official verification QR</b>
-                    <span>امسح الرمز للوصول مباشرة إلى هذا السجل الرسمي.</span>
-                    <code id="officialQrUrl"></code>
-                  </div>
-                </div>
-
-                <div class="record-note public-scope-note">
-                  <i>i</i>
-                  <p>
-                    <b>نطاق التحقق العام</b>
-                    <span>هذه الصفحة تؤكد السجل الرقمي المرتبط بالمعرّف المعروض. لا تعرض بيانات الإدارة أو معلومات خاصة غير لازمة للتحقق.</span>
-                  </p>
-                </div>
-
-                <div class="record-actions">
-                  <button class="primary download" id="downloadBtn">⇩ تنزيل الشهادة PDF</button>
-                  <button class="soft" id="downloadQrBtn">▣ تنزيل QR الرسمي</button>
-                  <button class="soft pdf-open" id="openPdfBtn">↗ فتح PDF في نافذة جديدة</button>
-                </div>
-              </aside>
-            </div>
-
-            <section class="record-checklist">
+            <section class="verification-guidance-modern">
               <div>
                 <span>01</span>
-                <p><b>طابق السيريال</b><small>قارن الرقم الموجود على الشهادة مع Certificate ID أعلاه.</small></p>
+                <p><b>طابق Certificate ID</b><small>يجب أن يطابق الرقم الظاهر على الشهادة الرقم الموجود في هذا السجل.</small></p>
               </div>
               <div>
                 <span>02</span>
-                <p><b>تحقق من الاسم والدورة</b><small>يجب أن تتطابق هوية حامل الشهادة والبرنامج مع النسخة التي أمامك.</small></p>
+                <p><b>راجع حامل الاعتماد والبرنامج</b><small>تحقق من الاسم، عنوان الشهادة والجهة المصدرة.</small></p>
               </div>
               <div>
                 <span>03</span>
-                <p><b>اقرأ الحالة</b><small>إذا كانت الشهادة ملغاة أو منتهية ستظهر الحالة هنا بوضوح.</small></p>
+                <p><b>اعتمد الحالة الحالية</b><small>النتيجة توضح إذا كان الاعتماد صالحاً أو منتهياً أو ملغى.</small></p>
               </div>
             </section>
           </div>
@@ -465,26 +527,43 @@
         </div>
       </div>
     </div>
-    <div class="modal" id="cameraModal">
-      <div class="dialog">
-        <div class="camera">
+    <div class="modal verification-camera-modal" id="cameraModal">
+      <div class="dialog verification-camera-dialog">
+        <div class="camera-dialog-head">
+          <div>
+            <span>QR VERIFICATION</span>
+            <h2>امسح رمز الشهادة</h2>
+          </div>
+          <button class="camera-close" id="closeCamera" type="button" aria-label="إغلاق">×</button>
+        </div>
+        <p>ضع رمز QR داخل الإطار وسيبدأ التحقق تلقائياً بعد قراءته.</p>
+        <div class="camera camera-modern">
           <video id="video" autoplay muted playsinline></video>
           <canvas id="qrCanvas" aria-hidden="true"></canvas>
           <div class="frame"></div>
           <div class="line"></div>
           <span id="cameraHint">وجّه رمز QR داخل الإطار</span>
         </div>
-        <h2>امسح رمز QR الخاص بالشهادة</h2>
-        <button class="cancel" id="closeCamera">إلغاء</button>
+        <div class="camera-privacy-note"><span>🔒</span> تستخدم الكاميرا لقراءة QR فقط ولا يتم حفظ الفيديو.</div>
       </div>
     </div>
-    <div class="modal" id="resultModal">
-      <div class="dialog result">
-        <div class="icon">!</div>
-        <h2>تعذر التحقق</h2>
-        <p>لم نجد سيريالاً مطابقاً. تأكد من الرقم ثم حاول مجدداً.</p>
-        <code class="serial" id="badSerial"></code
-        ><button class="cancel" id="closeResult">تم</button>
+    <div class="modal verification-error-modal" id="resultModal">
+      <div class="dialog result verification-error-dialog">
+        <div class="error-state-icon" aria-hidden="true">
+          <span>!</span>
+        </div>
+        <span class="error-kicker">VERIFICATION RESULT</span>
+        <h2>Certificate Not Found</h2>
+        <p>لم نتمكن من مطابقة هذا الرقم مع سجل شهادة متاح. تأكد من Certificate ID ثم حاول مرة أخرى.</p>
+        <div class="error-serial-box">
+          <small>Certificate ID entered</small>
+          <code class="serial" id="badSerial"></code>
+        </div>
+        <div class="error-help">
+          <span>i</span>
+          <p><b>تحقق من الرقم</b><small>راجع الأحرف والأرقام والشرطات كما تظهر على الشهادة الأصلية.</small></p>
+        </div>
+        <button class="primary error-retry" id="closeResult" type="button">العودة والمحاولة مجدداً</button>
       </div>
     </div>
     <div class="modal" id="adminToolModal">
