@@ -288,12 +288,23 @@ async function removeObject(objectPath) {
 
 function normalizeSignedUrl(value) {
   const config = fileStorageConfig();
-  const signed = String(value || "");
+  const signed = String(value || "").trim();
 
   if (/^https?:\/\//i.test(signed)) return signed;
-  if (signed.startsWith("/")) return config.url + signed;
 
-  return config.url + "/storage/v1/" + signed.replace(/^\/+/, "");
+  if (signed.startsWith("/storage/v1/")) {
+    return config.url + signed;
+  }
+
+  if (signed.startsWith("/object/")) {
+    return config.url + "/storage/v1" + signed;
+  }
+
+  return (
+    config.url +
+    "/storage/v1/" +
+    signed.replace(/^\/+/, "")
+  );
 }
 
 async function createSignedUrl(objectPath, expiresIn = 600) {
