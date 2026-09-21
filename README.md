@@ -1,87 +1,129 @@
 # DevsHub Academy Credential Platform
 
-A polished certificate-verification demo designed to show both the **Verifier** and **Admin** experiences to prospective customers in one interface.
+A production-oriented certificate verification and credential management platform with a public verifier and a multi-tenant administration console.
 
-## Current product mode
+## Product modes
 
-The project intentionally keeps **Verifier** and **Admin** visible together. This is a marketing/demo decision so a customer can understand the full workflow before authentication is added later.
+### Demo mode
 
-Do not hide either experience until the sales/demo phase is complete.
+`DEMO_MODE=true`
+
+- Verifier and Admin stay visible and accessible together.
+- Useful for customer demonstrations and sales presentations.
+- Browser fallback keeps the demo usable even before Supabase is configured.
+
+### Production mode
+
+`DEMO_MODE=false`
+
+- Public verification stays open.
+- Admin requires Supabase Auth.
+- Organization membership and role checks are enforced server-side.
+- Database, private file storage, audit logs, analytics, rate limits, and RLS become the authoritative system.
+
+## Main capabilities
+
+- Public certificate verification by serial, QR, or direct link
+- Official downloadable QR per certificate
+- Server-generated unique certificate serials
+- Valid / revoked / expired certificate lifecycle
+- CSV / Excel bulk issuance
+- Private certificate PDF storage
+- Organization logos and certificate templates
+- Dashboard analytics and verification reports
+- Multi-organization memberships and organization switching
+- Per-organization display name, colors, logo, and custom verification domain
+- HttpOnly cookie authentication
+- Role-based access: owner, admin, issuer, viewer
+- Audit logs
+- Rate limiting for public verification and login attempts
+- Supabase RLS policies
+- CI tests, scheduled smoke monitoring, and scheduled backup export
 
 ## Structure
 
 ```
 .
-├── index.html              # Source HTML shell
+├── index.html
 ├── assets/
-│   ├── styles.css          # Complete UI styles
-│   └── app.js              # Frontend behavior
+│   ├── styles.css
+│   └── app.js
 ├── api/
-│   ├── certificates.js     # Certificate API
-│   ├── health.js           # Deployment/config health endpoint
-│   ├── auth/               # Login/session/logout endpoints
-│   └── storage/            # PDF/logo/template endpoints
+│   ├── certificates.js
+│   ├── health.js
+│   ├── auth/
+│   └── storage/
 ├── server/
-│   ├── auth.js             # Session + membership logic
-│   ├── certificates.js     # Validation + serial generation
-│   ├── database.js         # PostgreSQL/Supabase adapter
-│   ├── file-storage.js     # Private Supabase Storage adapter
-│   └── storage.js          # DB/Redis/demo persistence layer
+│   ├── auth.js
+│   ├── certificates.js
+│   ├── database.js
+│   ├── file-storage.js
+│   ├── security.js
+│   └── storage.js
+├── supabase/
+│   └── migrations/
 ├── scripts/
-│   ├── build.mjs           # Rebuilds dist/
-│   └── check.mjs           # Lightweight structural checks
-├── dist/                   # Static deployment output
+│   ├── build.mjs
+│   ├── check.mjs
+│   ├── smoke.mjs
+│   └── export-backup.mjs
+├── tests/
+├── .github/workflows/
+├── dist/
+├── vercel.json
 ├── .env.example
 └── package.json
 ```
 
-## Development
-
-No frontend framework or dependency install is required for the current UI.
+## Local checks
 
 ```bash
 npm run check
+npm test
+npm run ci
 npm run build:static
 ```
 
-The `build:static` command recreates `dist/` from the source HTML/assets without changing Vercel's existing deployment behavior.
+No frontend framework build is required. `build:static` recreates `dist/` from the source HTML/assets.
 
-## Certificate storage
+## Supabase production setup
 
-Without cloud environment variables, the public demo continues to work using the frontend fallback and the built-in sample credential.
+Apply migrations in order:
 
-For cross-device persistence configure:
+1. `001_initial_schema.sql`
+2. `002_auth_membership.sql`
+3. `003_cloud_storage.sql`
+4. `004_product_foundation.sql`
+5. `005_security_rls.sql`
 
-- `UPSTASH_REDIS_REST_URL`
-- `UPSTASH_REDIS_REST_TOKEN`
+Required Vercel environment variables:
 
-The backend stores certificates in a Redis hash, one record per serial, rather than rewriting one large JSON array.
+```
+DEMO_MODE=false
+SUPABASE_URL=
+SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+SUPABASE_STORAGE_BUCKET=devshub-assets
+DEFAULT_ORGANIZATION_SLUG=devshub-academy
+RATE_LIMIT_SALT=
+```
 
-## Demo vs production security
+Keep `SUPABASE_SERVICE_ROLE_KEY` server-side only.
 
-`DEMO_MODE=true` intentionally keeps certificate issuing open enough for the sales demonstration.
+## Monitoring
 
-Before a real customer launch:
+`GET /api/health` reports application readiness plus the deployment release identifier.
 
-1. Set `DEMO_MODE=false`.
-2. Add real admin authentication/sessions.
-3. Protect Admin routes and API write operations.
-4. Move certificate PDFs to object storage.
-5. Add organization/user roles and audit logs.
+GitHub Actions also runs:
 
-The current visual Admin/Verifier layout should remain unchanged during the marketing phase unless explicitly requested.
+- CI on pushes and pull requests
+- production smoke tests every 6 hours
+- Supabase JSON backup export daily
 
+## Documentation
 
-## Private file storage
-
-Certificate PDFs, organization logos, and certificate templates are designed for private Supabase Storage.
-
-Apply `supabase/migrations/003_cloud_storage.sql` and configure:
-
-- `SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `SUPABASE_STORAGE_BUCKET=devshub-assets`
-
-The database stores object paths while the backend issues temporary signed URLs when files are opened.
-
-See `docs/cloud-storage.md` for the full storage design.
+- `docs/database.md`
+- `docs/authentication.md`
+- `docs/certificates-api.md`
+- `docs/cloud-storage.md`
+- `docs/production.md`
