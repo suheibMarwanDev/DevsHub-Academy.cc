@@ -19,7 +19,12 @@ const {
   isDemoMode,
 } = require("../server/certificates");
 const { requireAdminAccess } = require("../server/auth");
-const { databaseConfig, logAudit, logVerification } = require("../server/database");
+const {
+  databaseConfig,
+  getDashboardMetrics,
+  logAudit,
+  logVerification,
+} = require("../server/database");
 
 function json(res, status, body) {
   res.statusCode = status;
@@ -134,6 +139,41 @@ module.exports = async function handler(req, res) {
         return json(res, access.status || 401, {
           error: "Admin authentication required",
           authenticated: false,
+        });
+      }
+
+      if (String(req.query?.report || "").toLowerCase() === "dashboard") {
+        if (databaseConfig().configured) {
+          const metrics = await getDashboardMetrics(
+            organizationIdFrom(access),
+          );
+
+          return json(res, 200, {
+            metrics,
+            storage: storageConfig().provider,
+            demoMode: isDemoMode(),
+          });
+        }
+
+        return json(res, 200, {
+          metrics: {
+            certificatesTotal: BASE_CERTIFICATES.length,
+            validCertificates: BASE_CERTIFICATES.filter(
+              (item) => (item.status || "valid") === "valid",
+            ).length,
+            revokedCertificates: 0,
+            expiredCertificates: 0,
+            issuedThisMonth: BASE_CERTIFICATES.length,
+            verificationsToday: 0,
+            verifications30d: 0,
+            serialToday: 0,
+            qrToday: 0,
+            directToday: 0,
+            successfulToday: 0,
+            daily30d: [],
+          },
+          storage: "demo",
+          demoMode: true,
         });
       }
 
